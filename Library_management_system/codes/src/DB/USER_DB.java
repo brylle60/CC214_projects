@@ -5,15 +5,16 @@ import java.sql.*;
 public class USER_DB {
 
 
-    public static boolean Register(String password, int Id, String Name, String email){
+    public static boolean Register(String password, int Id, String Name, String email, int limit){
             try{
 
                 Connection connection = DriverManager.getConnection(DB_Connection.url,DB_Connection.user, DB_Connection.pass);
-                PreparedStatement register = connection.prepareStatement("INSERT INTO "+DB_Connection.tab+"(Id, name, password, email)"+"VALUES(?, ?, ?, ?)");
+                PreparedStatement register = connection.prepareStatement("INSERT INTO "+DB_Connection.tab+"(Id, name, password, email, Borrowing_limit)"+"VALUES(?, ?, ?, ?, ?)");
                 register.setInt(1,Id);
                 register.setString(2, Name);
                 register.setString(3, password);
                 register.setString(4, email);
+                register.setInt(5, limit);
 
                 register.executeUpdate();
 

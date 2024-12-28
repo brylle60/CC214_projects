@@ -25,6 +25,7 @@ public class AdminControls {
         List<Books> loadedBooks = Books_DB.loadBooks(LIBRARY_FILE);
         if (loadedBooks != null) {
             this.books.addAll(loadedBooks);
+         //   this.books.add(Books.addBooks());
             this.allBooks.addAll(loadedBooks);
             sortBooks(); // Sort initially loaded books
         }
@@ -52,6 +53,7 @@ public class AdminControls {
             allBooks.add(book);
             sortBooks(); // Sort after adding new book
             saveLibrary();
+            book.addBooks();  // Call instance method instead of static
         }
     }
 
@@ -141,12 +143,12 @@ public class AdminControls {
     }
 
     // Additional utility methods
-    public Books findBookByTitle(String title) {
-        return books.stream()
-                .filter(book -> book.getTitle().equalsIgnoreCase(title))
-                .findFirst()
-                .orElse(null);
-    }
+//    public Books findBookByTitle(String title) {
+//        return books.stream()
+//                .filter(book -> book.getTitle().equalsIgnoreCase(title))
+//                .findFirst()
+//                .orElse(null);
+//    }
 
     public List<Books> searchBooks(String keyword) {
         List<Books> results = new ArrayList<>();
@@ -161,5 +163,21 @@ public class AdminControls {
         Collections.sort(results, (b1, b2) ->
                 Integer.compare(b1.getISBN(), b2.getISBN()));
         return results;
+    }
+    // In your AdminControls class or wherever you need to search
+    public Books findBookByISBN(int isbn) {
+        return Search.searchByISBN(this.books, isbn);
+    }
+
+    public Books findBookByTitle(String title) {
+        return Search.searchByTitle(this.books, title);
+    }
+
+    public List<Books> findBooksByAuthor(String author) {
+        return Search.searchByAuthor(this.books, author);
+    }
+
+    public List<Books> findAvailableBooksByPrefix(String prefix) {
+        return Search.searchAvailableByTitlePrefix(this.books, prefix);
     }
 }

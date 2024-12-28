@@ -4,6 +4,8 @@ import DB.Books_DB;
 import SettersAndGetters.Books;
 import Users.AdminControls;
 import Books.*;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,9 +32,9 @@ public class main {
         try {
             // Create initial book list
             List<Books> initialBooks = new ArrayList<>();
-            initialBooks.add(new Books(001, "Java Basics", "John Doe", 2023, 13, 20));
-            initialBooks.add(new Books(002, "Python Programming", "Jane Smith",2011, 11, 30));
-            initialBooks.add(new Books(003, "Advanced Algorithms", "Jane Smith", 2013, 12, 20));
+            initialBooks.add(new Books(001, "Java Basics", "John Doe", LocalDateTime.now(), 13, 20));
+            initialBooks.add(new Books(002, "Python Programming", "Jane Smith",LocalDateTime.now(), 11, 30));
+            initialBooks.add(new Books(003, "Advanced Algorithms", "Jane Smith", LocalDateTime.now(), 12, 20));
 
             // Add books one by one
             for (Books book : initialBooks) {
@@ -94,7 +96,7 @@ public class main {
 
     private static void handleBorrowRequests() {
         try {
-            Books requestedBook = new Books(004, "Data Structures", "Alan Smith", 2024, 11, 28);
+            Books requestedBook = new Books(004, "Data Structures", "Alan Smith", LocalDateTime.now(), 11, 28);
             String requestingUser = "John Doe";
 
             boolean requestAdded = Borrowed_requests.addBorrowRequest(requestedBook, requestingUser);
