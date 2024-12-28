@@ -24,8 +24,16 @@ public class DB_Connection {
             properties.load(input);
         }
     }
-    public static String url = properties.getProperty("db.url");
+    //Book db connections
+    public static String book = properties.getProperty("db.book");
+    public static String BookTable = properties.getProperty("db.booktable");
+    //DataBase Acccess
     public static String user = properties.getProperty("db.user");
     public static String pass = properties.getProperty("db.password");
+    //User Database connections
+    public static String url = properties.getProperty("db.url");
     public static String tab = properties.getProperty("db.table");
+    //Borrowed History Connections
+    public static String BorrowedHistory = properties.getProperty("db.history");
+    public static String HistoryTable = properties.getProperty("db.historytable");
 }
