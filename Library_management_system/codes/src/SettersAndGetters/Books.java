@@ -34,32 +34,6 @@ public class Books {
         this.borrowed = false;
         this.borrower = "";
     }
-public Books(){};
-
-    public static void setISBN(int ISBN) {
-        Books.ISBN = ISBN;
-    }
-
-    public static void setTitle(String title) {
-        Books.title = title;
-    }
-
-    public static void setAuthor(String author) {
-        Books.author = author;
-    }
-
-    public static void setDatePublished(LocalDateTime datePublished) {
-        Books.datePublished = datePublished;
-    }
-
-    public static void setTotalCopy(int totalCopy) {
-        Books.totalCopy = totalCopy;
-    }
-
-    public void setCurrentBorrower(String currentBorrower) {
-        this.currentBorrower = currentBorrower;
-    }
-
 
     private boolean borrowed;
     private String borrower;
