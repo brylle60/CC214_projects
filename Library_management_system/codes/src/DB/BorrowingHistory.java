@@ -27,13 +27,13 @@ public static boolean BorrowedHistory(int ID, String userName, String booktitle,
 public static List<Borrowed_requests> LoadHistory(){
     try{
         Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
-        PreparedStatement statement = connection.prepareStatement("ELECT Id, UserName, BookName, Author, Copies, Status FROM " + DB_Connection.HistoryTable);
+        PreparedStatement statement = connection.prepareStatement("SELECT Id, UserName, BookName, Author, Copies, Status FROM " + DB_Connection.HistoryTable);
         ResultSet resultSet = statement.executeQuery();
 
         while (resultSet.next()){
             int Id = resultSet.getInt("Id");
             String UserName = resultSet.getString("UserName");
-            String BookName = resultSet.getString("BookName");
+            String BookName = resultSet.getString("Title");
             String Author = resultSet.getString("Author");
             int copies = resultSet.getInt("copies");
             String status = resultSet.getString("Status");

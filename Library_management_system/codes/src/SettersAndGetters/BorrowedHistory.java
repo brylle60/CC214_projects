@@ -22,18 +22,18 @@ public class BorrowedHistory {  private int userId;
         this.returnedDate = LocalDateTime.parse(returnedDate);
     }
 
-    public String toCSV() {
-        // Ensure each field goes to its proper column
-        return String.format("%d,%s,%s,%s,%d,%s,%s",
-                userId,
-                lastName,
-                firstName,
-                borrowedBook,
-                borrowedCopy,
-                borrowedDate,
-                returnedDate
-        );
-    }
+//    public String toCSV() {
+//        // Ensure each field goes to its proper column
+//        return String.format("%d,%s,%s,%s,%d,%s,%s",
+//                userId,
+//                lastName,
+//                firstName,
+//                borrowedBook,
+//                borrowedCopy,
+//                borrowedDate,
+//                returnedDate
+//        );
+//    }
 
     public static BorrowedHistory fromCSV(String line) {
         String[] parts = line.split(",");
@@ -50,5 +50,9 @@ public class BorrowedHistory {  private int userId;
                 parts[5].trim(),
                 parts[6].trim()
         );
+    }
+
+    public boolean toCSV() {
+        return false;
     }
 }

@@ -62,11 +62,7 @@ public class Books {
         return totalCopy;
     }
 
-    public void setAvailableCopy(int availableCopy) {
-
-        this.availableCopy = availableCopy;
-
-    }
+    public void setAvailableCopy(int availableCopy) {this.availableCopy = availableCopy;}
 
 
     public String getCurrentBorrower() {
@@ -136,7 +132,6 @@ public class Books {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r");
     }
-
     public static String unescapeCSV(String value) {
         if (value == null) return "";
         return value.replace("\\,", ",")
