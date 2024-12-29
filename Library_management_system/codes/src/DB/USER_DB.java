@@ -11,6 +11,7 @@ public class USER_DB {
         this.userCache = new Hashtable<>();
     }
 
+    //todo not yet fixed
     public boolean add(users user) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement(
@@ -49,6 +50,7 @@ public class USER_DB {
         }
     }
 
+    //todo needs GUI for registration
     public boolean validate(int id, String name, String password) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement valid = connection.prepareStatement(
@@ -68,6 +70,7 @@ public class USER_DB {
         }
     }
 
+    //todo used to check for existing account
     public boolean checkUser(int id) {
         // First check cache
         if (userCache.containsKey(id)) {
@@ -102,6 +105,7 @@ public class USER_DB {
         }
     }
 
+    // todo used to display all users in table or for the future add delete user method
     public Hashtable<Integer, users> loadAllUsers() {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement stmt = connection.prepareStatement("SELECT * FROM " + DB_Connection.tab);

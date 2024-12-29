@@ -129,6 +129,9 @@ public class Books {
         return availableCopy > 0;
     }
 
+    /**
+    *@param: to Csv methods
+    */
     public String toCSV() {
         return String.join(",",
                 String.valueOf(ISBN),
@@ -139,7 +142,9 @@ public class Books {
                 String.valueOf(totalCopy)
         );
     }
-
+/**
+ * @param: to csv
+ * */
 
     public static Books fromCSV(String csvLine) {
         if (csvLine == null || csvLine.trim().isEmpty()) {
@@ -160,13 +165,20 @@ public class Books {
                 Integer.parseInt(parts[5].trim())
         );
     }
-
+    /**
+     * @param: this one will the one that will format the .csv file
+     * like an excel like
+     * */
     public static String escapeCSV(String value) {
         if (value == null) return "";
         return value.replace(",", "\\,")
                 .replace("\n", "\\n")
                 .replace("\r", "\\r");
     }
+    /**
+     * @param: this one will the one that will format the .csv file
+     * like an excel like
+     * */
     public static String unescapeCSV(String value) {
         if (value == null) return "";
         return value.replace("\\,", ",")
@@ -174,9 +186,15 @@ public class Books {
                 .replace("\\r", "\r");
     }
 
+    /**
+     * @param; this one sets the local date
+     * */
     public void setBorrowDate(LocalDateTime borrowDate) {
         this.borrowDate = borrowDate;
     }
+/**
+ * @param: add books to the DataBase
+ * */
 
     public void addBooks() {  // Make this non-static
         String genre = "";  // You might want to add genre as a class property
