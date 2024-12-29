@@ -58,4 +58,8 @@ public class BorrowedHistory {  private int userId;
     public void borrowbooks(){
         BorrowingHistory.BorrowedHistory(this.userId, this.lastName, this.booktitle, this.authors, this.borrowedCopy, this.status);
     }
+
+    public boolean toCSV() {
+        return false;
+    }
 }
