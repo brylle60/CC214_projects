@@ -96,7 +96,7 @@ public class main {
 
     private static void handleBorrowRequests() {
         try {
-            Books requestedBook = new Books(004, "Data Structures", "Alan Smith", LocalDateTime.now(), 11, 28);
+            Books requestedBook = new Books(005, "Data Structures", "Alan Smith", LocalDateTime.now(), 11, 28);
             String requestingUser = "John Doe";
 
             boolean requestAdded = Borrowed_requests.addBorrowRequest(requestedBook, requestingUser);

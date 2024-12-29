@@ -22,35 +22,35 @@ public class AdminControls {
         currentInstance = this;
 
         // Load existing books
-        List<Books> loadedBooks = Books_DB.loadBooks(LIBRARY_FILE);
-        if (loadedBooks != null) {
-            this.books.addAll(loadedBooks);
-         //   this.books.add(Books.addBooks());
-            this.allBooks.addAll(loadedBooks);
+    //    List<Books> loadedBooks = Books_DB.loadBooks(LIBRARY_FILE);
+//        if (loadedBooks != null) {
+//            this.books.addAll(loadedBooks);
+//         //   this.books.add(Books.addBooks());
+//            this.allBooks.addAll(loadedBooks);
             sortBooks(); // Sort initially loaded books
         }
-    }
 
-    public static void updateBookStatus(Books updatedBook) {
-        if (currentInstance != null) {
-            for (Books book : currentInstance.books) {
-                if (book.getTitle().equals(updatedBook.getTitle())) {
-                    book.setBorrowed(updatedBook.isBorrowed());
-                    book.setBorrower(updatedBook.getBorrower());
-                    break;
-                }
-            }
-            currentInstance.saveLibrary();
-        }
-    }
+
+//    public static void updateBookStatus(Books updatedBook) {
+//        if (currentInstance != null) {
+//            for (Books book : currentInstance.books) {
+//                if (book.getTitle().equals(updatedBook.getTitle())) {
+//                    book.setBorrowed(updatedBook.isBorrowed());
+//                    book.setBorrower(updatedBook.getBorrower());
+//                    break;
+//                }
+//            }
+//            currentInstance.saveLibrary();
+//        }
+//    }
 
     public void addBook(Books book) {
         if (book != null) {
             // Set default values for new books
             book.setBorrowed(false);
             book.setBorrower("");
-            books.add(book);
-            allBooks.add(book);
+           // books.add(book);
+           // allBooks.add(book);
             sortBooks(); // Sort after adding new book
             saveLibrary();
             book.addBooks();  // Call instance method instead of static
