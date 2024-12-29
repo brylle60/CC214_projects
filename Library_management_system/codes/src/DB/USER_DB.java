@@ -1,83 +1,148 @@
 package DB;
 
+import SettersAndGetters.users;
 import java.sql.*;
+import java.util.Hashtable;
 
 public class USER_DB {
+    private Hashtable<Integer, users> userCache;
 
+    public USER_DB() {
+        this.userCache = new Hashtable<>();
+    }
 
-    public static boolean Register(String password, int Id, String Name, String email, int limit){
-            try{
+    public boolean add(users user) {
+        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement register = connection.prepareStatement(
+                     "INSERT INTO " + DB_Connection.tab +
+                             "(Id, name, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
 
-                Connection connection = DriverManager.getConnection(DB_Connection.url,DB_Connection.user, DB_Connection.pass);
-                PreparedStatement register = connection.prepareStatement("INSERT INTO "+DB_Connection.tab+"(Id, name, password, email, Borrowing_limit)"+"VALUES(?, ?, ?, ?, ?)");
-                register.setInt(1,Id);
-                register.setString(2, Name);
-                register.setString(3, password);
-                register.setString(4, email);
-                register.setInt(5, limit);
+            register.setInt(1, user.getId());
+            register.setString(2, user.getName());
+            register.setString(3, user.getPassword());
+            register.setString(4, user.getEmail());
+            register.setInt(5, user.getBorrowingLimit());
 
-                register.executeUpdate();
+            int rowsAffected = register.executeUpdate();
 
+            if (rowsAffected > 0) {
+                // Add to cache if database insert was successful
+                userCache.put(user.getId(), user);
                 return true;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
-            //return false;
+            return false;
+
+        } catch (SQLException e) {
+            if (e.getSQLState().equals("23000")) { // Duplicate entry
+                System.out.println("User with this ID already exists");
+            } else {
+                System.out.println("Error adding user: " + e.getMessage());
+            }
+            return false;
         }
+    }
 
-        public static boolean validate(int Id, String Name, String password){
-        try {
-            Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
-            PreparedStatement valid = connection.prepareStatement("SELECT * FROM "+DB_Connection.tab+" WHERE Id = ? AND password = ?");
+    public boolean validate(int id, String name, String password) {
+        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement valid = connection.prepareStatement(
+                     "SELECT * FROM " + DB_Connection.tab +
+                             " WHERE Id = ? AND name = ? AND password = ?")) {
 
-            valid.setInt(1, Id);
-            valid.setString(2, Name);
+            valid.setInt(1, id);
+            valid.setString(2, name);
             valid.setString(3, password);
 
-            valid.executeQuery();
-            return true;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    public static boolean checkuser(int Id){
-        try {
-            Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
-            PreparedStatement check = connection.prepareStatement("SELECT * FROM "+DB_Connection.tab+" WHERE Id = ?");
-
-            check.setInt(1, Id);
-
-            check.executeQuery();
-            return true;
+            ResultSet rs = valid.executeQuery();
+            return rs.next(); // Returns true if user exists with given credentials
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            System.out.println("Error validating user: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean checkUser(int id) {
+        // First check cache
+        if (userCache.containsKey(id)) {
+            return true;
         }
 
+        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement check = connection.prepareStatement(
+                     "SELECT * FROM " + DB_Connection.tab + " WHERE Id = ?")) {
+
+            check.setInt(1, id);
+            ResultSet rs = check.executeQuery();
+
+            if (rs.next()) {
+                // Add to cache if found in database
+                users user = new users(
+                        rs.getInt("Id"),
+                        rs.getString("name"),
+                        rs.getString("password"),
+                        rs.getString("email")
+                );
+                userCache.put(id, user);
+                return true;
+            }
+            return false;
+
+        } catch (SQLException e) {
+            System.out.println("Error checking user: " + e.getMessage());
+            return false;
+        }
     }
-//    public static Hashtable<Integer, users> hash() {
-//        Hashtable<Integer, users> hashmap = new Hashtable<>();
-//
-//        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
-//             PreparedStatement books_borrowed = connection.prepareStatement("SELECT * FROM " + DB_Connection.tab + " WHERE Id IS NOT NULL");
-//             ResultSet result = books_borrowed.executeQuery()) {
-//
-//            while (result.next()) {
-//                int Id = result.getInt("Id");
-//                String Name = result.getString("name");
-//                String pass = result.getString("password");
-//                String email = result.getString("email");
-//
-//                users user = new users(Id, Name, pass, email);
-//                hashmap.put(Id, user);
-//            }
-//
-//        } catch (SQLException e) {
-//            throw new RuntimeException("Database error: " + e.getMessage(), e);
-//        }
-//
-//        return hashmap;
-//    }
+
+    public Hashtable<Integer, users> loadAllUsers() {
+        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement stmt = connection.prepareStatement("SELECT * FROM " + DB_Connection.tab);
+             ResultSet result = stmt.executeQuery()) {
+
+            while (result.next()) {
+                users user = new users(
+                        result.getInt("Id"),
+                        result.getString("name"),
+                        result.getString("password"),
+                        result.getString("email")
+                );
+                userCache.put(user.getId(), user);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error loading users: " + e.getMessage());
+        }
+
+        return userCache;
+    }
+
+    // Get a user from cache or database
+    public users getUser(int id) {
+        if (userCache.containsKey(id)) {
+            return userCache.get(id);
+        }
+
+        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement stmt = connection.prepareStatement(
+                     "SELECT * FROM " + DB_Connection.tab + " WHERE Id = ?")) {
+
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                users user = new users(
+                        rs.getInt("Id"),
+                        rs.getString("name"),
+                        rs.getString("password"),
+                        rs.getString("email")
+                );
+                userCache.put(id, user);
+                return user;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving user: " + e.getMessage());
+        }
+
+        return null;
+    }
 }
