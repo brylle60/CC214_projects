@@ -1,20 +1,33 @@
 package SettersAndGetters;
 
 public class users {
-    private String Name;
+    private String lastName;
+    private String firstName;
+    private String Gender;
     private int Id;
     private String email;
     private String pass;
+    private int limit;
 
 
-    public users(int Id, String Name, String pass, String email){
+    public users(int Id, String lastName, String pass, String email, String firstName, String Gender, int limit){
         this.Id = Id;
-        this.Name = Name;
+        this.lastName = lastName;
         this.pass = pass;
         this.email = email;
+        this.firstName = firstName;
+        this.Gender= Gender;
+        this.limit = limit;
     }
     public users(){
+    }
 
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getGender() {
+        return Gender;
     }
 
     public int getId() {
@@ -29,8 +42,8 @@ public class users {
         return pass;
     }
 
-    public String getName() {
-        return Name;
+    public String getLastName() {
+        return lastName;
     }
 
     public void setId(int id) {
@@ -45,7 +58,14 @@ public class users {
         this.pass = pass;
     }
 
-    public void setName(String name) {
-        Name = name;
+    public void setLastName(String lastname) {
+        lastName = lastname;
+    }
+
+    public int getLimit() {
+        if (limit>3){
+            return -1;
+        }
+        return limit;
     }
 }

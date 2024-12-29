@@ -1,7 +1,7 @@
-System for Managing Book Inventories, User Accounts, and Borrowing/Returning Processes
+System for Managing Book Inventories, UserControl Accounts, and Borrowing/Returning Processes
 
 System Overview
-The system provides two roles: Admin and User, each with specific functionalities for managing book inventories, user accounts, and the borrowing/returning process. It utilizes various data structures for efficient operations.
+The system provides two roles: Admin and UserControl, each with specific functionalities for managing book inventories, user accounts, and the borrowing/returning process. It utilizes various data structures for efficient operations.
 
 Functionalities
 1. Admin Functionalities
@@ -23,17 +23,17 @@ View All Books
 Display all books with details, including available and borrowed quantities.
 Display all borrowed and returned books.
 
-User Account Management
+UserControl Account Management
 
 
-Create User Accounts
+Create UserControl Accounts
 Data Structure: Hash Table.
-Add new users with details: User ID (attribute), Name, Email, Password, and Borrowing Limit (3).
-Update User Information 
+Add new users with details: UserControl ID (attribute), Name, Email, Password, and Borrowing Limit (3).
+Update UserControl Information 
 Modify user details such as name and email. 
-Remove User Accounts
+Remove UserControl Accounts
 Delete a user account (if no books are outstanding).
-View User Information
+View UserControl Information
 Display user data and borrowing history.
 Reports and Logs (Cabilan)
 
@@ -47,7 +47,7 @@ Overdue Book Management (Cabilan)
 
 Notify users about overdue books..
 
-2. User Functionalities 
+2. UserControl Functionalities 
 Users interact with the system to borrow or return books and manage their accounts.
 Account Management (Tio & Pilar) 
 
@@ -105,15 +105,15 @@ Activity Logs (optional doh):
 
 Array or Linked List: Store activity logs in chronological order for auditing.
 
-Admin and User Workflows
+Admin and UserControl Workflows
 Admin Workflow
 Login as Admin.
 Add, update, or remove books in the inventory.
 Manage user accounts: create, update, or delete accounts.
 View inventory reports and logs.
 Notify users about overdue books.
-User Workflow
-Login as User.
+UserControl Workflow
+Login as UserControl.
 Search for available books.
 Borrow desired books if within the borrowing limit.
 Return books on or before the due date to avoid penalties.
