@@ -1,7 +1,7 @@
 package Books;
 
 import SettersAndGetters.Books;
-import Users.AdminControls;
+import Admin.AdminControls;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

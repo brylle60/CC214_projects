@@ -2,6 +2,7 @@ package SettersAndGetters;
 
 import DB.MySQLbookDb;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -65,6 +66,39 @@ public Books(){};
     private boolean isAvailable;
 
 
+    public Books() {}
+
+    public static void setISBN(int ISBN) {
+        Books.ISBN = ISBN;
+    }
+
+    public static void setTitle(String title) {
+        Books.title = title;
+    }
+
+    public static void setAuthor(String author) {
+        Books.author = author;
+    }
+
+    public static void setDatePublished(LocalDateTime datePublished) {
+        Books.datePublished = datePublished;
+    }
+
+    public static void setTotalCopy(int totalCopy) {
+        Books.totalCopy = totalCopy;
+    }
+
+    public void setCurrentBorrower(String currentBorrower) {
+        this.currentBorrower = currentBorrower;
+    }
+
+    public void setAvailable(boolean available) {
+        isAvailable = available;
+    }
+
+
+
+
     // Getters and setters
     public int getISBN() {
         return ISBN;
@@ -90,11 +124,7 @@ public Books(){};
         return totalCopy;
     }
 
-    public void setAvailableCopy(int availableCopy) {
-
-        this.availableCopy = availableCopy;
-
-    }
+    public void setAvailableCopy(int availableCopy) {this.availableCopy = availableCopy;}
 
 
     public String getCurrentBorrower() {
@@ -164,7 +194,6 @@ public Books(){};
                 .replace("\n", "\\n")
                 .replace("\r", "\\r");
     }
-
     public static String unescapeCSV(String value) {
         if (value == null) return "";
         return value.replace("\\,", ",")

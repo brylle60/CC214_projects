@@ -24,6 +24,7 @@ public static boolean BorrowedHistory(int ID, String userName, String booktitle,
         throw new RuntimeException(e);
     }
 }
+
 // public static List<Borrowed_requests> LoadHistory() {
 //        List<Borrowed_requests> historyList = new ArrayList<>();
 //
@@ -76,4 +77,6 @@ public static boolean BorrowedHistory(int ID, String userName, String booktitle,
 //            throw new RuntimeException("Failed to check borrow record", e);
 //        }
 //    }
+    
+
 }

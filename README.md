@@ -48,7 +48,7 @@ Overdue Book Management (Cabilan)
 Notify users about overdue books..
 
 2. UserControl Functionalities 
-Users interact with the system to borrow or return books and manage their accounts.
+Admin interact with the system to borrow or return books and manage their accounts.
 Account Management (Tio & Pilar) 
 
 
@@ -88,7 +88,7 @@ Books (Inventory Management):
 
 
 Linked List: For storing book details with attributes such as Title, Author, Genre, Quantity, etc.
-Users (Account Management):
+Admin (Account Management):
 
 
 Hash Table: {UserID: {Name, Email, BorrowingHistory: [BookIDs], BorrowLimit}}

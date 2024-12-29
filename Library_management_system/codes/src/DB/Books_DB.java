@@ -18,7 +18,8 @@ import java.util.List;
 import static SettersAndGetters.Books.*;
 //import static com.mysql.cj.util.TimeUtil.DATE_FORMATTER;
 
-public class Books_DB {
+public class Books_DB { // need to change this into db but before that we'll rest fuck this shit ass bugs
+
     public static List<Books> loadBooks(String filename) {
         List<Books> books = new ArrayList<>();
 
@@ -40,7 +41,6 @@ public class Books_DB {
         } catch (IOException e) {
             System.err.println("Error loading books: " + e.getMessage());
         }
-
         return books;
     }
 
