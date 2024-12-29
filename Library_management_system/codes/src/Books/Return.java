@@ -119,7 +119,7 @@ public class Return {
         // Get waitlisted requests for this book
         List<Borrowed_requests.BorrowRequest> pendingRequests =
                 Borrowed_requests.getPendingRequests().stream()
-                        .filter(req -> req.getBook().getTitle().equals(book.getTitle()))
+                        .filter(req -> req.getTitle().equals(book.getTitle()))
                         .sorted((r1, r2) -> r1.getRequestDate().compareTo(r2.getRequestDate()))
                         .toList();
 
