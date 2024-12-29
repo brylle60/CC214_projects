@@ -15,7 +15,7 @@ public class USER_DB {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement(
                      "INSERT INTO " + DB_Connection.tab +
-                             "(Id, name, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
+                             "(Id, firstname,lastname, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
 
             register.setInt(1, user.getId());
             register.setString(2, user.getLastName());
@@ -24,6 +24,11 @@ public class USER_DB {
             register.setString(5, user.getEmail());
             register.setString(6, user.getGender());
             register.setInt(7, user.getLimit());
+            register.setString(2, user.getFirstName());
+            register.setString(3, user.getLastName());
+            register.setString(4, user.getPass());
+            register.setString(5, user.getEmail());
+            register.setInt(6, user.getLimit());
 
             int rowsAffected = register.executeUpdate();
 
@@ -78,6 +83,13 @@ public class USER_DB {
 
             if (rs.next()) {
                 // Add to cache if found in database
+                // public users(int Id, String lastName, String firstName, String email,String pass){
+                //        this.Id = Id;
+                //        this.firstName = firstName;
+                //        this.lastName = lastName;
+                //        this.email = email;
+                //        this.pass = pass;
+                //    }
                 users user = new users(
                         rs.getInt("Id"),
                         rs.getString("lastname"),
@@ -107,7 +119,7 @@ public class USER_DB {
                 users user = new users(
                         result.getInt("Id"),
                         result.getString("lastname"),
-                        result.getString("firstname"),
+                        result.getString("first name"),
                         result.getString("password"),
                         result.getString("email"),
                         result.getString("Gender"),
@@ -140,7 +152,7 @@ public class USER_DB {
                 users user = new users(
                         rs.getInt("Id"),
                         rs.getString("lastname"),
-                        rs.getString("firstname"),
+                        rs.getString("first name"),
                         rs.getString("password"),
                         rs.getString("email"),
                         rs.getString("Gender"),
