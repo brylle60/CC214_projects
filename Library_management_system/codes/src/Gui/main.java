@@ -1,6 +1,7 @@
 package Gui;
 
 import DB.Books_DB;
+import DB.BorrowingHistory;
 import SettersAndGetters.Books;
 import Users.AdminControls;
 import Books.*;
@@ -15,16 +16,20 @@ public class main {
 
     public static void main(String[] args) {
         try {
-            librarySystem = new AdminControls();  // Initialize User object first
-            // Load or initialize library
-            if (initializeLibrary()) {
-                performLibraryOperations();
-                handleBorrowRequests();
-                displayLibraryStatus();
-            }
+            boolean recorded = BorrowingHistory.BorrowedHistory(
+                    3, "John Doe", "Java Programming", "Author Name", 1, "returned"
+            );
+            System.out.println("Borrow recorded: " + recorded);
+
+            // Test loading history
+      //      List<Borrowed_requests> history = BorrowingHistory.LoadHistory();
+//            for (Borrowed_requests request : history) {
+//                System.out.println("Borrow record: " + request.getUserName() +
+//                        " borrowed " + request.getBookName());
+//            }
         } catch (Exception e) {
-            System.err.println("Fatal error: " + e.getMessage());
-            e.printStackTrace(); // Print stack trace for debugging
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

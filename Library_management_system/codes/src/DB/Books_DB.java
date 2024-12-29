@@ -60,23 +60,23 @@ public class Books_DB {
         }
     }
 
-    public static void logBorrowHistory(int userId, String lastName, String firstName, String bookTitle,
-                                        int borrowedCopy, String borrowedDate, String returnedDate) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(Books.BORROW_HISTORY_FILE, true))) {
-            // If file is empty, write header
-            File file = new File(Books.BORROW_HISTORY_FILE);
-            if (file.length() == 0) {
-                writer.println("userid,last name, first name,borrowed book,borrowed copy,borrowed date,returned date");
-            }
-
-            // Create and write borrow history entry
-            BorrowedHistory history = new BorrowedHistory(userId, lastName, firstName, bookTitle,
-                    borrowedCopy, borrowedDate, returnedDate);
-            writer.println(history.toCSV());
-        } catch (IOException e) {
-            System.err.println("Error logging borrow history: " + e.getMessage());
-        }
-    }
+//    public static void logBorrowHistory(int userId, String lastName, String firstName, String bookTitle,
+//                                        int borrowedCopy, String borrowedDate, String returnedDate) {
+//        try (PrintWriter writer = new PrintWriter(new FileWriter(Books.BORROW_HISTORY_FILE, true))) {
+//            // If file is empty, write header
+//            File file = new File(Books.BORROW_HISTORY_FILE);
+//            if (file.length() == 0) {
+//                writer.println("userid,last name, first name,borrowed book,borrowed copy,borrowed date,returned date");
+//            }
+//
+//            // Create and write borrow history entry
+//            BorrowedHistory history = new BorrowedHistory(userId, lastName, firstName, bookTitle,
+//                    borrowedCopy, borrowedDate, returnedDate);
+//            writer.println(history.toCSV());
+//        } catch (IOException e) {
+//            System.err.println("Error logging borrow history: " + e.getMessage());
+//        }
+//    }
 
     public static void createBorrowHistoryFile() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Books.BORROW_HISTORY_FILE))) {
