@@ -1,6 +1,6 @@
 package DB;
 
-import SettersAndGetters.users;
+import DSA.Objects.users;
 import java.sql.*;
 import java.util.Hashtable;
 
@@ -82,14 +82,6 @@ public class USER_DB {
             ResultSet rs = check.executeQuery();
 
             if (rs.next()) {
-                // Add to cache if found in database
-                // public users(int Id, String lastName, String firstName, String email,String pass){
-                //        this.Id = Id;
-                //        this.firstName = firstName;
-                //        this.lastName = lastName;
-                //        this.email = email;
-                //        this.pass = pass;
-                //    }
                 users user = new users(
                         rs.getInt("Id"),
                         rs.getString("lastname"),
@@ -131,10 +123,8 @@ public class USER_DB {
         } catch (SQLException e) {
             System.out.println("Error loading users: " + e.getMessage());
         }
-
         return userCache;
     }
-
     // Get a user from cache or database
     public users getUser(int id) {
         if (userCache.containsKey(id)) {

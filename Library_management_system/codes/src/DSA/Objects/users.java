@@ -1,4 +1,4 @@
-package SettersAndGetters;
+package DSA.Objects;
 
 public class users {
     private String lastName;

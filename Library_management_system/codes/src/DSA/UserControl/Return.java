@@ -1,7 +1,8 @@
-package Books;
+package DSA.UserControl;
 
+import DSA.Admin.Borrowed_requests;
 import DB.DB_Connection;
-import SettersAndGetters.Books;
+import DSA.Objects.Books;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -53,7 +54,7 @@ public class Return {
             notifyWaitlistedUsers(book);
 
             String message = isOverdue ?
-                    "Book returned successfully. Note: This book was returned after the 2-week loan period." :
+                    "Book returned successfully. Note: This book was returned after the 2-week borrow period." :
                     "Book returned successfully";
 
             return new ReturnResult(true, message, isOverdue);
@@ -120,7 +121,7 @@ public class Return {
         List<Borrowed_requests.BorrowRequest> pendingRequests =
                 Borrowed_requests.getPendingRequests().stream()
                         .filter(req -> req.getTitle().equals(book.getTitle()))
-                        .sorted((r1, r2) -> r1.getRequestDate().compareTo(r2.getRequestDate()))
+                        .sorted((r1, r2) -> r1.getBorrowReqDate().compareTo(r2.getBorrowReqDate()))
                         .toList();
 
         if (!pendingRequests.isEmpty()) {
@@ -161,7 +162,6 @@ public class Return {
             throw new RuntimeException("Error retrieving overdue books: " +
                     e.getMessage());
         }
-
         return overdueBooks;
     }
     public static void main(String[] args) {
