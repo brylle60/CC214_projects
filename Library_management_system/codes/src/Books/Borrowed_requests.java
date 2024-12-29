@@ -54,6 +54,7 @@ public class Borrowed_requests {
             return copies;
         }
     }
+    //todo fix this one
     public static boolean addBorrowRequest(Books book, String user) {
         if (book != null && user != null && !user.trim().isEmpty()) {
             if (book.isAvailable()) {  // Check availability before adding request
@@ -66,7 +67,7 @@ public class Borrowed_requests {
         }
         return false;
     }
-
+//todo fix this one
     public static boolean confirmRequest(String bookTitle, String user, int copy) {
         BorrowRequest request = findPendingRequest(bookTitle, user);
 //        if (request != null && request.getBook().isAvailable()) {  // Verify availability
