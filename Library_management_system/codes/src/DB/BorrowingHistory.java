@@ -1,6 +1,6 @@
 package DB;
 
-import Books.Borrowed_requests;
+import DSA.Admin.Borrowed_requests;
 
 import java.sql.*;
 import java.util.ArrayList;

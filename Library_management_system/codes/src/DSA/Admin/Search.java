@@ -1,6 +1,6 @@
-package Admin;
+package DSA.Admin;
 
-import SettersAndGetters.Books;
+import DSA.Objects.Books;
 
 import java.util.ArrayList;
 import java.util.Comparator;

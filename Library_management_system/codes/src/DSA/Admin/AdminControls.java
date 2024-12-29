@@ -1,7 +1,7 @@
-package  Admin;
+package DSA.Admin;
 import CSVFiles.Books_DB;
-import SettersAndGetters.Books;
-import SettersAndGetters.BorrowedHistory;
+import DSA.Objects.Books;
+import DSA.Objects.BorrowedHistory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

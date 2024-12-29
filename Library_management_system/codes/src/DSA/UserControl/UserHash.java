@@ -1,4 +1,4 @@
-package UserControl;
+package DSA.UserControl;
 
 public class UserHash {
 
