@@ -66,7 +66,7 @@ public class Borrowed_requests {
             book.setAvailableCopy(request.copies-copy);
 
 
-            AdminControls.updateBookStatus(book);
+            //AdminControls.updateBookStatus(book);
             return true;
         }
         return false;
