@@ -120,7 +120,7 @@ public class Return {
         List<Borrowed_requests.BorrowRequest> pendingRequests =
                 Borrowed_requests.getPendingRequests().stream()
                         .filter(req -> req.getTitle().equals(book.getTitle()))
-                        .sorted((r1, r2) -> r1.getRequestDate().compareTo(r2.getRequestDate()))
+                   //     .sorted((r1, r2) -> r1.getRequestDate().compareTo(r2.getRequestDate()))
                         .toList();
 
         if (!pendingRequests.isEmpty()) {
