@@ -18,10 +18,12 @@ public class USER_DB {
                              "(Id, name, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
 
             register.setInt(1, user.getId());
-            register.setString(2, user.getName());
-            register.setString(3, user.getPassword());
-            register.setString(4, user.getEmail());
-            register.setInt(5, user.getBorrowingLimit());
+            register.setString(2, user.getLastName());
+            register.setString(3, user.getFirstName());
+            register.setString(4, user.getPass());
+            register.setString(5, user.getEmail());
+            register.setString(6, user.getGender());
+            register.setInt(7, user.getLimit());
 
             int rowsAffected = register.executeUpdate();
 
@@ -78,9 +80,12 @@ public class USER_DB {
                 // Add to cache if found in database
                 users user = new users(
                         rs.getInt("Id"),
-                        rs.getString("name"),
+                        rs.getString("lastname"),
+                        rs.getString("firstname"),
                         rs.getString("password"),
-                        rs.getString("email")
+                        rs.getString("email"),
+                        rs.getString("Gender"),
+                        rs.getInt("limit")
                 );
                 userCache.put(id, user);
                 return true;
@@ -101,9 +106,12 @@ public class USER_DB {
             while (result.next()) {
                 users user = new users(
                         result.getInt("Id"),
-                        result.getString("name"),
+                        result.getString("lastname"),
+                        result.getString("firstname"),
                         result.getString("password"),
-                        result.getString("email")
+                        result.getString("email"),
+                        result.getString("Gender"),
+                        result.getInt("limit")
                 );
                 userCache.put(user.getId(), user);
             }
@@ -131,9 +139,12 @@ public class USER_DB {
             if (rs.next()) {
                 users user = new users(
                         rs.getInt("Id"),
-                        rs.getString("name"),
+                        rs.getString("lastname"),
+                        rs.getString("firstname"),
                         rs.getString("password"),
-                        rs.getString("email")
+                        rs.getString("email"),
+                        rs.getString("Gender"),
+                        rs.getInt("limit")
                 );
                 userCache.put(id, user);
                 return user;
