@@ -19,6 +19,15 @@ public class users {
         this.Gender= Gender;
         this.limit = limit;
     }
+
+
+    public users(int Id, String lastName, String firstName, String email,String pass){
+        this.Id = Id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.pass = pass;
+    }
     public users(){
     }
 

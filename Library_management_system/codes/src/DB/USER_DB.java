@@ -15,13 +15,14 @@ public class USER_DB {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement(
                      "INSERT INTO " + DB_Connection.tab +
-                             "(Id, name, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
+                             "(Id, firstname,lastname, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
 
             register.setInt(1, user.getId());
-            register.setString(2, user.getName());
-            register.setString(3, user.getPassword());
-            register.setString(4, user.getEmail());
-            register.setInt(5, user.getBorrowingLimit());
+            register.setString(2, user.getFirstName());
+            register.setString(3, user.getLastName());
+            register.setString(4, user.getPass());
+            register.setString(5, user.getEmail());
+            register.setInt(6, user.getLimit());
 
             int rowsAffected = register.executeUpdate();
 
@@ -78,7 +79,8 @@ public class USER_DB {
                 // Add to cache if found in database
                 users user = new users(
                         rs.getInt("Id"),
-                        rs.getString("name"),
+                        rs.getString("first name"),
+                        rs.getString("last name"),
                         rs.getString("password"),
                         rs.getString("email")
                 );
@@ -101,7 +103,8 @@ public class USER_DB {
             while (result.next()) {
                 users user = new users(
                         result.getInt("Id"),
-                        result.getString("name"),
+                        result.getString("first name"),
+                        result.getString("last name"),
                         result.getString("password"),
                         result.getString("email")
                 );
@@ -131,7 +134,8 @@ public class USER_DB {
             if (rs.next()) {
                 users user = new users(
                         rs.getInt("Id"),
-                        rs.getString("name"),
+                        rs.getString("first name"),
+                        rs.getString("last name"),
                         rs.getString("password"),
                         rs.getString("email")
                 );
