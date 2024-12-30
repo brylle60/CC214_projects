@@ -16,7 +16,7 @@ public class USER_DB {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement(
                      "INSERT INTO " + DB_Connection.tab +
-                             "(Id, firstname,lastname, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
+                             "(Id, lastName, firstName, password, email, Gender, `limit`) VALUES(?, ?, ?, ?, ?, ?, ?)")) {
 
             register.setInt(1, user.getId());
             register.setString(2, user.getLastName());
@@ -26,18 +26,16 @@ public class USER_DB {
             register.setString(6, user.getGender());
             register.setInt(7, user.getLimit());
 
-
             int rowsAffected = register.executeUpdate();
 
             if (rowsAffected > 0) {
-                // Add to cache if database insert was successful
                 userCache.put(user.getId(), user);
                 return true;
             }
             return false;
 
         } catch (SQLException e) {
-            if (e.getSQLState().equals("23000")) { // Duplicate entry
+            if (e.getSQLState().equals("23000")) {
                 System.out.println("User with this ID already exists");
             } else {
                 System.out.println("Error adding user: " + e.getMessage());
@@ -45,7 +43,6 @@ public class USER_DB {
             return false;
         }
     }
-
     //todo needs GUI for registration
     public static boolean validate(int id, String name, String password) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);

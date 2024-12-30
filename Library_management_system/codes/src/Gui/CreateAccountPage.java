@@ -10,7 +10,7 @@ public class CreateAccountPage extends JFrame {
     private static final Color GOLD = new Color(0xAF, 0x8C, 0x53);
     private static final Color TEXT_COLOR = new Color(0x25, 0x29, 0x26);
     private static final Color INPUT_TEXT_COLOR = GOLD;
-    private JTextField usernameField;
+    private JTextField idField;
     private JPasswordField passwordField;
     private JPasswordField confirmPasswordField;
     private JTextField emailField;
@@ -20,12 +20,12 @@ public class CreateAccountPage extends JFrame {
 
     public CreateAccountPage() {
         setTitle("Create Account");
-        setSize(400, 700);  // Made taller to accommodate additional fields
+        setSize(400, 700);  // Reduced height after removing username field
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Main panel setup remains the same...
+        // Main panel setup
         JPanel mainPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -44,38 +44,38 @@ public class CreateAccountPage extends JFrame {
         titleLabel.setBounds(110, 30, 250, 30);
         mainPanel.add(titleLabel);
 
+        // ID Field
+        idField = createTransparentTextField();
+        idField.setBounds(75, 100, 250, 35);
+        mainPanel.add(idField);
+
+        JLabel idPlaceholder = new JLabel("Enter ID Number");
+        idPlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
+        idPlaceholder.setForeground(GOLD);
+        idPlaceholder.setBounds(75, 80, 250, 20);
+        mainPanel.add(idPlaceholder);
+
         // First Name Field
         firstNameField = createTransparentTextField();
-        firstNameField.setBounds(75, 100, 250, 35);
+        firstNameField.setBounds(75, 170, 250, 35);
         mainPanel.add(firstNameField);
 
         JLabel firstNamePlaceholder = new JLabel("Enter First Name");
         firstNamePlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
         firstNamePlaceholder.setForeground(GOLD);
-        firstNamePlaceholder.setBounds(75, 80, 250, 20);
+        firstNamePlaceholder.setBounds(75, 150, 250, 20);
         mainPanel.add(firstNamePlaceholder);
 
         // Last Name Field
         lastNameField = createTransparentTextField();
-        lastNameField.setBounds(75, 170, 250, 35);
+        lastNameField.setBounds(75, 240, 250, 35);
         mainPanel.add(lastNameField);
 
         JLabel lastNamePlaceholder = new JLabel("Enter Last Name");
         lastNamePlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
         lastNamePlaceholder.setForeground(GOLD);
-        lastNamePlaceholder.setBounds(75, 150, 250, 20);
+        lastNamePlaceholder.setBounds(75, 220, 250, 20);
         mainPanel.add(lastNamePlaceholder);
-
-        // Username Field
-        usernameField = createTransparentTextField();
-        usernameField.setBounds(75, 240, 250, 35);
-        mainPanel.add(usernameField);
-
-        JLabel usernamePlaceholder = new JLabel("Enter Username");
-        usernamePlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
-        usernamePlaceholder.setForeground(GOLD);
-        usernamePlaceholder.setBounds(75, 220, 250, 20);
-        mainPanel.add(usernamePlaceholder);
 
         // Email Field
         emailField = createTransparentTextField();
@@ -140,47 +140,66 @@ public class CreateAccountPage extends JFrame {
     }
 
     private void handleCreateAccount() {
-        String firstName = firstNameField.getText().trim();
-        String lastName = lastNameField.getText().trim();
-        String username = usernameField.getText().trim();
-        String email = emailField.getText().trim();
-        String password = new String(passwordField.getPassword());
-        String confirmPassword = new String(confirmPasswordField.getPassword());
-        String gender = (String) genderComboBox.getSelectedItem();
+        // Wrap ID parsing in try-catch to handle invalid input
+        try {
+            String idText = idField.getText().trim();
+            int id;
+            try {
+                id = Integer.parseInt(idText);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Please enter a valid numeric ID",
+                        "Invalid ID",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-        if (!validateUserInput(username, email, password, confirmPassword)) {
-            JOptionPane.showMessageDialog(this,
-                    "Please fill all fields and ensure passwords match",
-                    "Validation Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+            String firstName = firstNameField.getText().trim();
+            String lastName = lastNameField.getText().trim();
+            String email = emailField.getText().trim();
+            String password = new String(passwordField.getPassword());
+            String confirmPassword = new String(confirmPasswordField.getPassword());
+            String gender = (String) genderComboBox.getSelectedItem();
 
-        // Create new user object
-        users newUser = new users();
-        newUser.setFirstName(firstName);
-        newUser.setLastName(lastName);
-        newUser.setPass(password);
-        newUser.setEmail(email);
-        newUser.setGender(gender);
-        newUser.setLimit(5); // Default borrowing limit
+            if (!validateUserInput(email, password, confirmPassword, id)) {
+                JOptionPane.showMessageDialog(this,
+                        "Please fill all fields correctly and ensure passwords match",
+                        "Validation Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-        // Try to add user to database
-        if (USER_DB.add(newUser)) {
-            JOptionPane.showMessageDialog(this,
-                    "Account created successfully!",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-            dispose(); // Close the registration window
-        } else {
-            JOptionPane.showMessageDialog(this,
-                    "Failed to create account. Please try again.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            // Create new user object
+            users newUser = new users();
+            newUser.setId(id);
+            newUser.setFirstName(firstName);
+            newUser.setLastName(lastName);
+            newUser.setPass(password);
+            newUser.setEmail(email);
+            newUser.setGender(gender);
+            newUser.setLimit(3); // Default borrowing limit
+
+            // Try to add user to database
+            if (USER_DB.add(newUser)) {
+                JOptionPane.showMessageDialog(this,
+                        "Account created successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to create account. User ID may already exist.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+          e.printStackTrace();
         }
     }
 
-    // Existing helper methods remain the same...
+
+
+    // Helper methods remain the same...
     private JTextField createTransparentTextField() {
         JTextField field = new JTextField() {
             @Override
@@ -270,19 +289,30 @@ public class CreateAccountPage extends JFrame {
 
         return button;
     }
-    // (createTransparentTextField, createTransparentPasswordField, createStyledButton)
 
-    public boolean validateUserInput(String username, String email, String password, String confirmpass) {
-        if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmpass.isEmpty() ||
+    // (createTransparentTextField, createTransparentPasswordField, createStyledButton)
+    public boolean validateUserInput(String email, String password, String confirmpass, int id) {
+        // Check for empty fields
+        if (email.isEmpty() || password.isEmpty() || confirmpass.isEmpty() ||
                 firstNameField.getText().trim().isEmpty() || lastNameField.getText().trim().isEmpty()) {
             return false;
         }
+
+        // Password match check
         if (!password.equals(confirmpass)) {
             return false;
         }
+
+        // Email format check
         if (!email.contains("@") || !email.contains(".")) {
             return false;
         }
+
+        // ID validation - assuming valid IDs are positive numbers less than 100000
+        if (id <= 0 || id >= 100000) {
+            return false;
+        }
+
         return true;
     }
 }
