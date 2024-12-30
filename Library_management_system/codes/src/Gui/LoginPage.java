@@ -96,16 +96,16 @@ public class LoginPage extends JFrame {
             int id = Integer.parseInt(idText);
 
             // Check if user exists first
-            if (!USER_DB.checkUser(id)) {
-                JOptionPane.showMessageDialog(this,
-                        "User ID not found",
-                        "Login Error",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+//            if (!USER_DB.checkUser(id)) {
+//                JOptionPane.showMessageDialog(this,
+//                        "User ID not found",
+//                        "Login Error",
+//                        JOptionPane.ERROR_MESSAGE);
+//                return;
+//            }
 
             // Validate credentials
-            if (USER_DB.validate(id, password, password)) {
+            if (USER_DB.validate(id, password)) {
                 JOptionPane.showMessageDialog(this,
                         "Login successful!",
                         "Success",

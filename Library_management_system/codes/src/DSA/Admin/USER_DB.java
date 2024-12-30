@@ -44,19 +44,17 @@ public class USER_DB {
         }
     }
     //todo needs GUI for registration
-    public static boolean validate(int id, String name, String password) {
+    public static boolean validate(int id, String password) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement valid = connection.prepareStatement(
                      "SELECT * FROM " + DB_Connection.tab +
-                             " WHERE Id = ? AND name = ? AND password = ?")) {
+                             " WHERE Id = ? AND password = ?")) {
 
             valid.setInt(1, id);
-            valid.setString(2, name);
-            valid.setString(3, password);
+            valid.setString(2, password);
 
             ResultSet rs = valid.executeQuery();
-            return rs.next(); // Returns true if user exists with given credentials
-
+            return rs.next();
         } catch (SQLException e) {
             System.out.println("Error validating user: " + e.getMessage());
             return false;
@@ -64,39 +62,39 @@ public class USER_DB {
     }
 
     //todo used to check for existing account
-    public static boolean checkUser(int id) {
-        // First check cache
-        if (userCache.containsKey(id)) {
-            return true;
-        }
-
-        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
-             PreparedStatement check = connection.prepareStatement(
-                     "SELECT * FROM " + DB_Connection.tab + " WHERE Id = ?")) {
-
-            check.setInt(1, id);
-            ResultSet rs = check.executeQuery();
-
-            if (rs.next()) {
-                users user = new users(
-                        rs.getInt("Id"),
-                        rs.getString("lastname"),
-                        rs.getString("firstname"),
-                        rs.getString("password"),
-                        rs.getString("email"),
-                        rs.getString("Gender"),
-                        rs.getInt("limit")
-                );
-                userCache.put(id, user);
-                return true;
-            }
-            return false;
-
-        } catch (SQLException e) {
-            System.out.println("Error checking user: " + e.getMessage());
-            return false;
-        }
-    }
+//    public static boolean checkUser(int id) {
+//        // First check cache
+//        if (userCache.containsKey(id)) {
+//            return true;
+//        }
+//
+//        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
+//             PreparedStatement check = connection.prepareStatement(
+//                     "SELECT * FROM " + DB_Connection.tab + " WHERE Id = ?")) {
+//
+//            check.setInt(1, id);
+//            ResultSet rs = check.executeQuery();
+//
+//            if (rs.next()) {
+//                users user = new users(
+//                        rs.getInt("Id"),
+//                        rs.getString("lastname"),
+//                        rs.getString("firstname"),
+//                        rs.getString("password"),
+//                        rs.getString("email"),
+//                        rs.getString("Gender"),
+//                        rs.getInt("limit")
+//                );
+//                userCache.put(id, user);
+//                return true;
+//            }
+//            return false;
+//
+//        } catch (SQLException e) {
+//            System.out.println("Error checking user: " + e.getMessage());
+//            return false;
+//        }
+//    }
 
     // todo used to display all users in table or for the future add delete user method
     public Hashtable<Integer, users> loadAllUsers() {
@@ -159,11 +157,11 @@ public class USER_DB {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement del = connection.prepareStatement("DELETE FROM " + DB_Connection.tab + " WHERE Id = ?")) {
 
-            // First check if user exists
-            if (!checkUser(id)) {
-                System.out.println("No user found with ID: " + id);
-                return false;
-            }
+//            // First check if user exists
+//            if (!checkUser(id)) {
+//                System.out.println("No user found with ID: " + id);
+//                return false;
+//            }
 
             del.setInt(1, id);
             int rowsAffected = del.executeUpdate();
