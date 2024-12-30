@@ -24,7 +24,7 @@ public class CreateAccountPage extends JFrame {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\janlo\\IdeaProjects\\LIBRARY MANAGEMENT\\src\\login.jpg");
+                ImageIcon imageIcon = new ImageIcon("Library_management_system/codes/src/Images/login.jpg");
                 Image image = imageIcon.getImage();
                 g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
             }
