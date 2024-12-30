@@ -1,14 +1,14 @@
 package DSA.Admin;
-import CSVFiles.Books_DB;
+
 import DSA.Objects.Books;
 import DSA.Objects.BorrowedHistory;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.sql.SQLException;
 
 public class AdminControls {
     private final List<Books> books;
@@ -27,10 +27,15 @@ public class AdminControls {
     }
 
     private void loadBooks() {
-        List<Books> loadedBooks = Books_DB.loadBooks(Books.LIBRARY_FILE);
-        if (loadedBooks != null) {
-            this.books.addAll(loadedBooks);
-            sortBooks();
+        try {
+            List<Books> loadedBooks = MySQLbookDb.LoadBooks();
+            if (loadedBooks != null) {
+                this.books.clear(); // Clear existing books before loading
+                this.books.addAll(loadedBooks);
+                sortBooks();
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading books: " + e.getMessage());
         }
     }
 
@@ -39,11 +44,25 @@ public class AdminControls {
             throw new IllegalArgumentException("Book cannot be null");
         }
 
+        // Validate book data
+        if (book.getTitle() == null || book.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Book title cannot be empty");
+        }
+        if (book.getAuthor() == null || book.getAuthor().trim().isEmpty()) {
+            throw new IllegalArgumentException("Book author cannot be empty");
+        }
+        if (book.getTotalCopy() < 0) {
+            throw new IllegalArgumentException("Total copies cannot be negative");
+        }
+
+        // Initialize book state
         book.setBorrowed(false);
         book.setBorrower("");
+        book.setAvailableCopy(book.getTotalCopy());
+
+        // Add to local list and database
         books.add(book);
         sortBooks();
-        saveLibrary();
         book.addBooks(); // Persist to database
     }
 
@@ -54,55 +73,82 @@ public class AdminControls {
 
         if (bookOpt.isPresent()) {
             Books book = bookOpt.get();
+
+            // Update book state
             LocalDateTime currentTime = LocalDateTime.now();
             book.setBorrowDate(currentTime);
             book.setAvailableCopy(book.getAvailableCopy() - copies);
 
-            // Create borrow record
-            BorrowedHistory borrowedHistory = new BorrowedHistory(
-                    userId, lastName, title, author, copies, "borrowed"
-            );
-            borrowedHistory.borrowbooks(); // Persist borrow history
+            // Update database
+            try {
+                // Create borrow record
+                BorrowedHistory borrowedHistory = new BorrowedHistory(
+                        userId, lastName, title, author, copies, "BORROWED"
+                );
+                borrowedHistory.borrowbooks();
 
-            saveLibrary();
-            return true;
+                // Update book copies in database
+                MySQLbookDb.updateBookCopies(book.getISBN(), book.getAvailableCopy());
+
+                return true;
+            } catch (Exception e) {
+                // Rollback local changes if database update fails
+                book.setAvailableCopy(book.getAvailableCopy() + copies);
+                System.err.println("Error processing borrow: " + e.getMessage());
+                return false;
+            }
         }
         return false;
     }
 
-    public boolean returnBook(String title, int userId, int copies) {
+    public boolean returnBook(String title, int userId, String userName, int copies) {
         Optional<Books> bookOpt = books.stream()
                 .filter(b -> b.getTitle().equals(title))
                 .findFirst();
 
         if (bookOpt.isPresent()) {
             Books book = bookOpt.get();
-            LocalDateTime returnTime = LocalDateTime.now();
-            book.setAvailableCopy(book.getAvailableCopy() + copies);
 
-            // Update return date in history
-            Books_DB.updateBorrowHistoryReturnDate(title, userId, returnTime.toString());
+            try {
+                // Use the Return class we fixed earlier
+                DSA.UserControl.Return.ReturnResult result =
+                        DSA.UserControl.Return.processReturn(title, userName);
 
-            saveLibrary();
-            return true;
+                if (result.isSuccess()) {
+                    // Update local state
+                    book.setAvailableCopy(book.getAvailableCopy() + copies);
+
+                    // Additional handling for overdue books if needed
+                    if (result.isOverdue()) {
+                        // Could implement overdue fine calculation here
+                        System.out.println("Note: Book was returned overdue");
+                    }
+
+                    return true;
+                }
+            } catch (Exception e) {
+                System.err.println("Error processing return: " + e.getMessage());
+            }
         }
         return false;
     }
 
     public List<Books> getAvailableBooks() {
-        List<Books> availableBooks = books.stream()
-                .filter(Books::isAvailable)
-                .sorted(Comparator.comparingInt(Books::getISBN))
-                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        return Collections.unmodifiableList(availableBooks);
+        return Collections.unmodifiableList(
+                books.stream()
+                        .filter(Books::isAvailable)
+                        .sorted(Comparator.comparingInt(Books::getISBN))
+                        .toList()
+        );
     }
 
     public List<Books> getBorrowedBooks() {
-        List<Books> borrowedBooks = books.stream()
-                .filter(b -> !b.isAvailable())
-                .sorted(Comparator.comparingInt(Books::getISBN))
-                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        return Collections.unmodifiableList(borrowedBooks);
+        return Collections.unmodifiableList(
+                books.stream()
+                        .filter(b -> !b.isAvailable())
+                        .sorted(Comparator.comparingInt(Books::getISBN))
+                        .toList()
+        );
     }
 
     public List<Books> searchBooks(String keyword) {
@@ -111,13 +157,14 @@ public class AdminControls {
         }
 
         String searchTerm = keyword.toLowerCase();
-        List<Books> results = books.stream()
-                .filter(book ->
-                        book.getTitle().toLowerCase().contains(searchTerm) ||
-                                book.getAuthor().toLowerCase().contains(searchTerm))
-                .sorted(Comparator.comparingInt(Books::getISBN))
-                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        return Collections.unmodifiableList(results);
+        return Collections.unmodifiableList(
+                books.stream()
+                        .filter(book ->
+                                book.getTitle().toLowerCase().contains(searchTerm) ||
+                                        book.getAuthor().toLowerCase().contains(searchTerm))
+                        .sorted(Comparator.comparingInt(Books::getISBN))
+                        .toList()
+        );
     }
 
     private void sortBooks() {
@@ -126,11 +173,7 @@ public class AdminControls {
                 .thenComparing(Books::getTitle, String.CASE_INSENSITIVE_ORDER));
     }
 
-    private void saveLibrary() {
-        Books_DB.saveBooks(books, Books.LIBRARY_FILE);
-    }
-
-    // Search methods delegated to Search utility class
+    // Search methods
     public Books findBookByISBN(int isbn) {
         return Search.searchByISBN(this.books, isbn);
     }
@@ -145,5 +188,10 @@ public class AdminControls {
 
     public List<Books> findAvailableBooksByPrefix(String prefix) {
         return Search.searchAvailableByTitlePrefix(this.books, prefix);
+    }
+
+    // Method to refresh book list from database
+    public void refreshBooks() {
+        loadBooks();
     }
 }

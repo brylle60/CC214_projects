@@ -1,4 +1,4 @@
-package DB;
+package DSA.Admin;
 
 import DSA.Objects.users;
 import java.sql.*;
@@ -25,11 +25,7 @@ public class USER_DB {
             register.setString(5, user.getEmail());
             register.setString(6, user.getGender());
             register.setInt(7, user.getLimit());
-            register.setString(2, user.getFirstName());
-            register.setString(3, user.getLastName());
-            register.setString(4, user.getPass());
-            register.setString(5, user.getEmail());
-            register.setInt(6, user.getLimit());
+
 
             int rowsAffected = register.executeUpdate();
 

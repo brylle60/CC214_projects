@@ -1,6 +1,6 @@
 package DSA.Objects;
 
-import DB.BorrowingHistory;
+import DSA.Admin.BorrowingHistory;
 
 import java.time.LocalDateTime;
 
@@ -26,7 +26,78 @@ public class BorrowedHistory {  private int userId;
         this.status = Satus;
     }
 
-//    public String toCSV() {
+    public int getUserId() {
+        return userId;
+    }
+
+    public int getBorrowedCopy() {
+        return borrowedCopy;
+    }
+
+    public String getBorrowedBook() {
+        return borrowedBook;
+    }
+
+    public LocalDateTime getBorrowedDate() {
+        return borrowedDate;
+    }
+
+    public String getBooktitle() {
+        return booktitle;
+    }
+
+    public LocalDateTime getReturnedDate() {
+        return returnedDate;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getAuthors() {
+        return authors;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setBooktitle(String booktitle) {
+        this.booktitle = booktitle;
+    }
+
+    public void setAuthors(String authors) {
+        this.authors = authors;
+    }
+
+    public void setBorrowedCopy(int borrowedCopy) {
+        this.borrowedCopy = borrowedCopy;
+    }
+
+    public void setBorrowedBook(String borrowedBook) {
+        this.borrowedBook = borrowedBook;
+    }
+
+    public void setBorrowedDate(LocalDateTime borrowedDate) {
+        this.borrowedDate = borrowedDate;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setReturnedDate(LocalDateTime returnedDate) {
+        this.returnedDate = returnedDate;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+    //    public String toCSV() {
 //        // Ensure each field goes to its proper column
 //        return String.format("%d,%s,%s,%s,%d,%s,%s",
 //                userId,
@@ -59,7 +130,7 @@ public class BorrowedHistory {  private int userId;
         BorrowingHistory.BorrowedHistory(this.userId, this.lastName, this.booktitle, this.authors, this.borrowedCopy, this.status);
     }
 
-    public boolean toCSV() {
-        return false;
-    }
+   // public boolean toCSV() {
+    //    return false;
+    //}
 }

@@ -1,7 +1,8 @@
 package DSA.Objects;
 
-import DB.MySQLbookDb;
+import DSA.Admin.MySQLbookDb;
 
+import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -39,7 +40,7 @@ public class Books {
     private boolean isAvailable;
 
 
-    public Books() {}
+    public Books(int id, String title, String author, Date datepub, int copies, int totalCopies) {}
 
     public static void setISBN(int ISBN) {
         Books.ISBN = ISBN;
