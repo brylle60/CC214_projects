@@ -1,6 +1,6 @@
 package DSA.UserControl;
 
-import DB.DB_Connection;
+import DSA.Admin.DB_Connection;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
