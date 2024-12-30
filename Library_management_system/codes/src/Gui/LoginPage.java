@@ -17,7 +17,7 @@ public class LoginPage extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Create main panel with background image
+
         JPanel mainPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -29,57 +29,66 @@ public class LoginPage extends JFrame {
         };
         mainPanel.setLayout(null);
 
-        // Sign In Label
+
         JLabel titleLabel = new JLabel("SIGN IN");
         titleLabel.setFont(new Font("Serif", Font.BOLD, 24));
         titleLabel.setForeground(GOLD);
         titleLabel.setBounds(150, 50, 150, 30);
         mainPanel.add(titleLabel);
 
-        // Username Field
+
         usernameField = createTransparentTextField();
         usernameField.setBounds(75, 150, 250, 35);
         mainPanel.add(usernameField);
 
-        // Username placeholder
+
         JLabel usernamePlaceholder = new JLabel("Enter Username");
         usernamePlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
         usernamePlaceholder.setForeground(GOLD);
         usernamePlaceholder.setBounds(75, 130, 250, 20);
         mainPanel.add(usernamePlaceholder);
 
-        // Password Field
+
         passwordField = createTransparentPasswordField();
         passwordField.setBounds(75, 230, 250, 35);
         mainPanel.add(passwordField);
 
-        // Password placeholder
+
         JLabel passwordPlaceholder = new JLabel("Enter Password");
         passwordPlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
         passwordPlaceholder.setForeground(GOLD);
         passwordPlaceholder.setBounds(75, 210, 250, 20);
         mainPanel.add(passwordPlaceholder);
 
-        // Login Button
         JButton loginButton = createStyledButton("LOG IN", true);
         loginButton.setBounds(75, 300, 250, 40);
         loginButton.addActionListener(e -> {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
+
+            if (username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(LoginPage.this,
+                        "Please enter both username and password",
+                        "Login Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             System.out.println("Login attempt - Username: " + username);
         });
         mainPanel.add(loginButton);
 
-        // Create Account Button
         JButton createAccountButton = createStyledButton("No Account? Click to Create", false);
         createAccountButton.setBounds(75, 360, 250, 40);
         createAccountButton.addActionListener(e -> {
-            System.out.println("Create account clicked");
+            CreateAccountPage createAccountPage = new CreateAccountPage();
+            createAccountPage.setVisible(true);
         });
         mainPanel.add(createAccountButton);
 
         add(mainPanel);
     }
+
 
     private JTextField createTransparentTextField() {
         JTextField field = new JTextField() {
