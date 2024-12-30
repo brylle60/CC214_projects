@@ -1,8 +1,7 @@
-package DB;
+package DSA.Admin;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.sql.Connection;
 import java.util.Properties;
 
 public class DB_Connection {
@@ -18,7 +17,7 @@ public class DB_Connection {
 
     private static void loadProperties() throws IOException {
         String env = System.getProperty("env", "local"); // Default to local if not specified
-        String configFile = String.format("D:\\JAVA PROJECTS\\CC214 PROJECTS\\CC214_projects\\Library_management_system\\codes\\Config\\config.properties", env);
+        String configFile = String.format("/home/john/CC214_projects/Library_management_system/config.properties", env);
 
         try (FileInputStream input = new FileInputStream(configFile)) {
             properties.load(input);

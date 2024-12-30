@@ -1,7 +1,11 @@
-package DB;
+package DSA.Admin;
+
+import DSA.Objects.Books;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MySQLbookDb {
     public static boolean AddBooks(int Id, String title, String genre, String author, LocalDateTime Datepub, int copies, int totalCopies) {
@@ -64,6 +68,45 @@ public class MySQLbookDb {
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+    public static List<Books> LoadBooks(){
+        List<Books> book = new ArrayList<>();
+        try {
+            Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+            PreparedStatement BoookInfo = connection.prepareStatement("SELECT * FROM "+DB_Connection.BookTable);
+
+            ResultSet resultSet = BoookInfo.executeQuery();
+
+            while(resultSet.next()){
+                int id = resultSet.getInt("Id");
+                String title = resultSet.getString("Title");
+                String genre = resultSet.getString("Genre");
+                String author = resultSet.getString("Author");
+                Date datepub = resultSet.getDate("Date Published");
+                int copies = resultSet.getInt("Copies");
+                int totalCopies = resultSet.getInt("Total Copies");
+
+                Books books = new Books(id, title, author, datepub, copies, totalCopies);
+
+            }
+
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return book;
+    }
+    public static void updateBookCopies(int isbn, int availableCopies) {
+        try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement update = connection.prepareStatement(
+                     "UPDATE " + DB_Connection.BookTable + " SET Copies = ? WHERE Id = ?")) {
+
+            update.setInt(1, availableCopies);
+            update.setInt(2, isbn);
+            update.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update book copies: " + e.getMessage(), e);
         }
     }
 }

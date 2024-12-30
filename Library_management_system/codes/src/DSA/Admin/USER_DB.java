@@ -1,4 +1,4 @@
-package DB;
+package DSA.Admin;
 
 import DSA.Objects.users;
 import java.sql.*;

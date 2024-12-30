@@ -1,6 +1,4 @@
-package DB;
-
-import DSA.Admin.Borrowed_requests;
+package DSA.Admin;
 
 import java.sql.*;
 import java.util.ArrayList;
