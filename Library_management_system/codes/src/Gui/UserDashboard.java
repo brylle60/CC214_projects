@@ -1,14 +1,13 @@
 package Gui;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 
-public class LibraryGUI extends JFrame { //iauhefiuahdf
+public class UserDashboard extends JFrame {
     private JTextField searchField;
     private JComboBox<String> sortByComboBox;
     private JPanel mainPanel;
 
-    public LibraryGUI() {
+    public UserDashboard() {
         setTitle("Library Management System");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -140,8 +139,8 @@ public class LibraryGUI extends JFrame { //iauhefiuahdf
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            LibraryGUI libraryGUI = new LibraryGUI();
-            libraryGUI.setVisible(true);
+            UserDashboard userDashboard = new UserDashboard();
+            userDashboard.setVisible(true);
         });
     }
 }

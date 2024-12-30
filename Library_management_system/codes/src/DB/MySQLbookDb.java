@@ -43,6 +43,7 @@ public class MySQLbookDb {
             throw new RuntimeException(e);
         }
     }
+    //todo applly this in the admin control class
 
     public static boolean delete(int ID) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);

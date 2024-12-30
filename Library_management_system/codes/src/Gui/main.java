@@ -1,10 +1,10 @@
 package Gui;
 
+import DSA.Admin.Borrowed_requests;
 import CSVFiles.Books_DB;
 import DB.BorrowingHistory;
-import SettersAndGetters.Books;
-import Admin.AdminControls;
-import Books.*;
+import DSA.Objects.Books;
+import DSA.Admin.AdminControls;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

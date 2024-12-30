@@ -1,9 +1,9 @@
-package Books;
+package DSA.Admin;
 
-import SettersAndGetters.Books;
-import Admin.AdminControls;
+import DSA.Objects.Books;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,14 +23,26 @@ public class Borrowed_requests {
         private String author;
         private String status;
         private int copies;
+        private LocalDateTime borrowReqDate;
 
-        public BorrowRequest(int id, String title, String user, String author, int copies, String Status) {
+
+        public BorrowRequest(int id, String title, String user, String author, int copies, String Status, LocalDateTime borrowReqDate) {
 //            this.book = book;
             this.Id = id;
             this.title = title;
             this.user = user;
             this.author = author;
             this.status = Status;
+            this.copies=copies;
+            this.borrowReqDate = borrowReqDate;
+        }
+
+        public BorrowRequest(int id, String userName, String bookName, String author, int copies, String status) {
+            this.Id = id;
+            this.title = title;
+            this.user = user;
+            this.author = author;
+            this.status = status;
             this.copies=copies;
         }
 
@@ -40,11 +52,9 @@ public class Borrowed_requests {
         public int getId() {
             return Id;
         }
-
         public String getTitle() {
             return title;
         }
-
         public String getUser() { return user; }
         public String getAuthor() { return author;}
         public String getStatus() { return status; }
@@ -53,7 +63,12 @@ public class Borrowed_requests {
         public int getCopies() {
             return copies;
         }
+        public void setBorrowReqDate(LocalDateTime borrowReqDate) {this.borrowReqDate = borrowReqDate;}
+        public LocalDateTime getBorrowReqDate() {return borrowReqDate;}
+
+
     }
+    //todo fix this one
     public static boolean addBorrowRequest(Books book, String user) {
         if (book != null && user != null && !user.trim().isEmpty()) {
             if (book.isAvailable()) {  // Check availability before adding request
@@ -66,7 +81,7 @@ public class Borrowed_requests {
         }
         return false;
     }
-
+//todo fix this one
     public static boolean confirmRequest(String bookTitle, String user, int copy) {
         BorrowRequest request = findPendingRequest(bookTitle, user);
 //        if (request != null && request.getBook().isAvailable()) {  // Verify availability
@@ -136,5 +151,5 @@ public class Borrowed_requests {
     public static void clearAllRequests() {
         borrowRequests.clear();
     }
-
+//    public static LocalDateTime
 }

@@ -1,6 +1,6 @@
 package DB;
 
-import SettersAndGetters.users;
+import DSA.Objects.users;
 import java.sql.*;
 import java.util.Hashtable;
 
@@ -11,11 +11,12 @@ public class USER_DB {
         this.userCache = new Hashtable<>();
     }
 
+    //todo not yet fixed
     public boolean add(users user) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement(
                      "INSERT INTO " + DB_Connection.tab +
-                             "(Id, name, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
+                             "(Id, firstname,lastname, password, email, Borrowing_limit) VALUES(?, ?, ?, ?, ?)")) {
 
             register.setInt(1, user.getId());
             register.setString(2, user.getLastName());
@@ -24,6 +25,11 @@ public class USER_DB {
             register.setString(5, user.getEmail());
             register.setString(6, user.getGender());
             register.setInt(7, user.getLimit());
+            register.setString(2, user.getFirstName());
+            register.setString(3, user.getLastName());
+            register.setString(4, user.getPass());
+            register.setString(5, user.getEmail());
+            register.setInt(6, user.getLimit());
 
             int rowsAffected = register.executeUpdate();
 
@@ -44,6 +50,7 @@ public class USER_DB {
         }
     }
 
+    //todo needs GUI for registration
     public boolean validate(int id, String name, String password) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement valid = connection.prepareStatement(
@@ -63,6 +70,7 @@ public class USER_DB {
         }
     }
 
+    //todo used to check for existing account
     public boolean checkUser(int id) {
         // First check cache
         if (userCache.containsKey(id)) {
@@ -77,7 +85,6 @@ public class USER_DB {
             ResultSet rs = check.executeQuery();
 
             if (rs.next()) {
-                // Add to cache if found in database
                 users user = new users(
                         rs.getInt("Id"),
                         rs.getString("lastname"),
@@ -98,6 +105,7 @@ public class USER_DB {
         }
     }
 
+    // todo used to display all users in table or for the future add delete user method
     public Hashtable<Integer, users> loadAllUsers() {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement stmt = connection.prepareStatement("SELECT * FROM " + DB_Connection.tab);
@@ -107,7 +115,7 @@ public class USER_DB {
                 users user = new users(
                         result.getInt("Id"),
                         result.getString("lastname"),
-                        result.getString("firstname"),
+                        result.getString("first name"),
                         result.getString("password"),
                         result.getString("email"),
                         result.getString("Gender"),
@@ -119,10 +127,8 @@ public class USER_DB {
         } catch (SQLException e) {
             System.out.println("Error loading users: " + e.getMessage());
         }
-
         return userCache;
     }
-
     // Get a user from cache or database
     public users getUser(int id) {
         if (userCache.containsKey(id)) {
@@ -140,7 +146,7 @@ public class USER_DB {
                 users user = new users(
                         rs.getInt("Id"),
                         rs.getString("lastname"),
-                        rs.getString("firstname"),
+                        rs.getString("first name"),
                         rs.getString("password"),
                         rs.getString("email"),
                         rs.getString("Gender"),

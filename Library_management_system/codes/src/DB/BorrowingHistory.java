@@ -1,6 +1,6 @@
 package DB;
 
-import Books.Borrowed_requests;
+import DSA.Admin.Borrowed_requests;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -25,6 +25,7 @@ public static boolean BorrowedHistory(int ID, String userName, String booktitle,
         throw new RuntimeException(e);
     }
 }
+//todo make this one works
 
  public static List<Borrowed_requests.BorrowRequest> LoadHistory() {
         List<Borrowed_requests.BorrowRequest> historyList = new ArrayList<>();
