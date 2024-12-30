@@ -1,13 +1,16 @@
 package Gui;
 
+import DSA.Admin.USER_DB;
+import DSA.Objects.users;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class LoginPage extends JFrame {
     private static final Color GOLD = new Color(0xAF, 0x8C, 0x53);
     private static final Color TEXT_COLOR = new Color(0x25, 0x29, 0x26);
-    private static final Color INPUT_TEXT_COLOR = GOLD; // Color for user input text
-    private JTextField usernameField;
+    private static final Color INPUT_TEXT_COLOR = GOLD;
+    private JTextField idField;
     private JPasswordField passwordField;
 
     public LoginPage() {
@@ -36,17 +39,17 @@ public class LoginPage extends JFrame {
         titleLabel.setBounds(150, 50, 150, 30);
         mainPanel.add(titleLabel);
 
-        // Username Field
-        usernameField = createTransparentTextField();
-        usernameField.setBounds(75, 150, 250, 35);
-        mainPanel.add(usernameField);
+        // ID Field
+        idField = createTransparentTextField();
+        idField.setBounds(75, 150, 250, 35);
+        mainPanel.add(idField);
 
-        // Username placeholder
-        JLabel usernamePlaceholder = new JLabel("Enter Username");
-        usernamePlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
-        usernamePlaceholder.setForeground(GOLD);
-        usernamePlaceholder.setBounds(75, 130, 250, 20);
-        mainPanel.add(usernamePlaceholder);
+        // ID placeholder
+        JLabel idPlaceholder = new JLabel("Enter User ID");
+        idPlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
+        idPlaceholder.setForeground(GOLD);
+        idPlaceholder.setBounds(75, 130, 250, 20);
+        mainPanel.add(idPlaceholder);
 
         // Password Field
         passwordField = createTransparentPasswordField();
@@ -63,24 +66,77 @@ public class LoginPage extends JFrame {
         // Login Button
         JButton loginButton = createStyledButton("LOG IN", true);
         loginButton.setBounds(75, 300, 250, 40);
-        loginButton.addActionListener(e -> {
-            String username = usernameField.getText();
-            String password = new String(passwordField.getPassword());
-            System.out.println("Login attempt - Username: " + username);
-        });
+        loginButton.addActionListener(e -> handleLogin());
         mainPanel.add(loginButton);
 
         // Create Account Button
         JButton createAccountButton = createStyledButton("No Account? Click to Create", false);
         createAccountButton.setBounds(75, 360, 250, 40);
-        createAccountButton.addActionListener(e -> {
-            System.out.println("Create account clicked");
-        });
+        createAccountButton.addActionListener(e -> openCreateAccountPage());
         mainPanel.add(createAccountButton);
 
         add(mainPanel);
     }
 
+    private void handleLogin() {
+        String idText = idField.getText().trim();
+        String password = new String(passwordField.getPassword());
+
+        // Validate input fields
+        if (idText.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter both ID and password",
+                    "Login Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Parse and validate ID
+        try {
+            int id = Integer.parseInt(idText);
+
+            // Check if user exists first
+            if (!USER_DB.checkUser(id)) {
+                JOptionPane.showMessageDialog(this,
+                        "User ID not found",
+                        "Login Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Validate credentials
+            if (USER_DB.validate(id, password, password)) {
+                JOptionPane.showMessageDialog(this,
+                        "Login successful!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // Open main application window (implement this based on your needs)
+                LibraryGUI libraryGUI = new LibraryGUI();
+                libraryGUI.setVisible(true);
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid password",
+                        "Login Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid numeric ID",
+                    "Input Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void openCreateAccountPage() {
+        CreateAccountPage createAccountPage = new CreateAccountPage();
+        createAccountPage.setVisible(true);
+    }
+
+    // Rest of the existing methods remain the same...
+
+    // Existing helper methods remain the same...
     private JTextField createTransparentTextField() {
         JTextField field = new JTextField() {
             @Override
@@ -91,8 +147,8 @@ public class LoginPage extends JFrame {
             }
         };
         field.setOpaque(false);
-        field.setForeground(INPUT_TEXT_COLOR); // Set the text color for user input
-        field.setCaretColor(INPUT_TEXT_COLOR); // Set the cursor color
+        field.setForeground(INPUT_TEXT_COLOR);
+        field.setCaretColor(INPUT_TEXT_COLOR);
         field.setFont(new Font("Serif", Font.PLAIN, 14));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(GOLD),
@@ -110,8 +166,8 @@ public class LoginPage extends JFrame {
             }
         };
         field.setOpaque(false);
-        field.setForeground(INPUT_TEXT_COLOR); // Set the text color for user input
-        field.setCaretColor(INPUT_TEXT_COLOR); // Set the cursor color
+        field.setForeground(INPUT_TEXT_COLOR);
+        field.setCaretColor(INPUT_TEXT_COLOR);
         field.setFont(new Font("Serif", Font.PLAIN, 14));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(GOLD),

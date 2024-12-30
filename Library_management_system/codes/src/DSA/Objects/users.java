@@ -71,10 +71,22 @@ public class users {
         lastName = lastname;
     }
 
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
     public int getLimit() {
         if (limit>3){
             return -1;
         }
         return limit;
+    }
+
+    public void setGender(String gender) {
+        Gender = gender;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
     }
 }

@@ -5,14 +5,14 @@ import java.sql.*;
 import java.util.Hashtable;
 
 public class USER_DB {
-    private Hashtable<Integer, users> userCache;
+    private static Hashtable<Integer, users> userCache;
 
     public USER_DB() {
         this.userCache = new Hashtable<>();
     }
 
     //todo not yet fixed
-    public boolean add(users user) {
+    public static boolean add(users user) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement(
                      "INSERT INTO " + DB_Connection.tab +
@@ -47,7 +47,7 @@ public class USER_DB {
     }
 
     //todo needs GUI for registration
-    public boolean validate(int id, String name, String password) {
+    public static boolean validate(int id, String name, String password) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement valid = connection.prepareStatement(
                      "SELECT * FROM " + DB_Connection.tab +
@@ -67,7 +67,7 @@ public class USER_DB {
     }
 
     //todo used to check for existing account
-    public boolean checkUser(int id) {
+    public static boolean checkUser(int id) {
         // First check cache
         if (userCache.containsKey(id)) {
             return true;

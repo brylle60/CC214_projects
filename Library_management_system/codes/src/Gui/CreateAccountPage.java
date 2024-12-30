@@ -1,5 +1,8 @@
 package Gui;
 
+import DSA.Admin.USER_DB;
+import DSA.Objects.users;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -11,106 +14,173 @@ public class CreateAccountPage extends JFrame {
     private JPasswordField passwordField;
     private JPasswordField confirmPasswordField;
     private JTextField emailField;
+    private JTextField firstNameField;
+    private JTextField lastNameField;
+    private JComboBox<String> genderComboBox;
 
     public CreateAccountPage() {
         setTitle("Create Account");
-        setSize(400, 591);  // Made taller to accommodate additional fields
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);  // Only close this window, not the whole application
+        setSize(400, 700);  // Made taller to accommodate additional fields
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Create main panel with background image
+        // Main panel setup remains the same...
         JPanel mainPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\janlo\\IdeaProjects\\LIBRARY MANAGEMENT\\src\\login.jpg");
+                ImageIcon imageIcon = new ImageIcon("Library_management_system/codes/src/Images/login.jpg");
                 Image image = imageIcon.getImage();
                 g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
             }
         };
         mainPanel.setLayout(null);
 
-        // Create Account Label
+        // Title Label
         JLabel titleLabel = new JLabel("CREATE ACCOUNT");
         titleLabel.setFont(new Font("Serif", Font.BOLD, 24));
         titleLabel.setForeground(GOLD);
-        titleLabel.setBounds(110, 50, 250, 30);
+        titleLabel.setBounds(110, 30, 250, 30);
         mainPanel.add(titleLabel);
+
+        // First Name Field
+        firstNameField = createTransparentTextField();
+        firstNameField.setBounds(75, 100, 250, 35);
+        mainPanel.add(firstNameField);
+
+        JLabel firstNamePlaceholder = new JLabel("Enter First Name");
+        firstNamePlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
+        firstNamePlaceholder.setForeground(GOLD);
+        firstNamePlaceholder.setBounds(75, 80, 250, 20);
+        mainPanel.add(firstNamePlaceholder);
+
+        // Last Name Field
+        lastNameField = createTransparentTextField();
+        lastNameField.setBounds(75, 170, 250, 35);
+        mainPanel.add(lastNameField);
+
+        JLabel lastNamePlaceholder = new JLabel("Enter Last Name");
+        lastNamePlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
+        lastNamePlaceholder.setForeground(GOLD);
+        lastNamePlaceholder.setBounds(75, 150, 250, 20);
+        mainPanel.add(lastNamePlaceholder);
 
         // Username Field
         usernameField = createTransparentTextField();
-        usernameField.setBounds(75, 130, 250, 35);
+        usernameField.setBounds(75, 240, 250, 35);
         mainPanel.add(usernameField);
 
-        // Username placeholder
         JLabel usernamePlaceholder = new JLabel("Enter Username");
         usernamePlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
         usernamePlaceholder.setForeground(GOLD);
-        usernamePlaceholder.setBounds(75, 110, 250, 20);
+        usernamePlaceholder.setBounds(75, 220, 250, 20);
         mainPanel.add(usernamePlaceholder);
 
         // Email Field
         emailField = createTransparentTextField();
-        emailField.setBounds(75, 200, 250, 35);
+        emailField.setBounds(75, 310, 250, 35);
         mainPanel.add(emailField);
 
-        // Email placeholder
         JLabel emailPlaceholder = new JLabel("Enter Email");
         emailPlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
         emailPlaceholder.setForeground(GOLD);
-        emailPlaceholder.setBounds(75, 180, 250, 20);
+        emailPlaceholder.setBounds(75, 290, 250, 20);
         mainPanel.add(emailPlaceholder);
+
+        // Gender ComboBox
+        String[] genders = {"Male", "Female", "Other"};
+        genderComboBox = new JComboBox<>(genders);
+        genderComboBox.setBounds(75, 380, 250, 35);
+        genderComboBox.setForeground(GOLD);
+        genderComboBox.setBackground(new Color(0, 0, 0, 0));
+        mainPanel.add(genderComboBox);
+
+        JLabel genderPlaceholder = new JLabel("Select Gender");
+        genderPlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
+        genderPlaceholder.setForeground(GOLD);
+        genderPlaceholder.setBounds(75, 360, 250, 20);
+        mainPanel.add(genderPlaceholder);
 
         // Password Field
         passwordField = createTransparentPasswordField();
-        passwordField.setBounds(75, 270, 250, 35);
+        passwordField.setBounds(75, 450, 250, 35);
         mainPanel.add(passwordField);
 
-        // Password placeholder
         JLabel passwordPlaceholder = new JLabel("Enter Password");
         passwordPlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
         passwordPlaceholder.setForeground(GOLD);
-        passwordPlaceholder.setBounds(75, 250, 250, 20);
+        passwordPlaceholder.setBounds(75, 430, 250, 20);
         mainPanel.add(passwordPlaceholder);
 
         // Confirm Password Field
         confirmPasswordField = createTransparentPasswordField();
-        confirmPasswordField.setBounds(75, 340, 250, 35);
+        confirmPasswordField.setBounds(75, 520, 250, 35);
         mainPanel.add(confirmPasswordField);
 
-        // Confirm Password placeholder
         JLabel confirmPasswordPlaceholder = new JLabel("Confirm Password");
         confirmPasswordPlaceholder.setFont(new Font("Serif", Font.PLAIN, 14));
         confirmPasswordPlaceholder.setForeground(GOLD);
-        confirmPasswordPlaceholder.setBounds(75, 320, 250, 20);
+        confirmPasswordPlaceholder.setBounds(75, 500, 250, 20);
         mainPanel.add(confirmPasswordPlaceholder);
 
         // Create Account Button
         JButton createAccountButton = createStyledButton("CREATE ACCOUNT", true);
-        createAccountButton.setBounds(75, 410, 250, 40);
-        createAccountButton.addActionListener(e -> {
-            String username = usernameField.getText();
-            String email = emailField.getText();
-            String password = new String(passwordField.getPassword());
-            String confirmPassword = new String(confirmPasswordField.getPassword());
-
-            // Add your account creation logic here
-            System.out.println("Create account attempt - Username: " + username + ", Email: " + email);
-        });
+        createAccountButton.setBounds(75, 580, 250, 40);
+        createAccountButton.addActionListener(e -> handleCreateAccount());
         mainPanel.add(createAccountButton);
 
         // Back to Login Button
         JButton backButton = createStyledButton("Back to Login", false);
-        backButton.setBounds(75, 470, 250, 40);
-        backButton.addActionListener(e -> {
-            dispose(); // Close the create account window
-        });
+        backButton.setBounds(75, 630, 250, 40);
+        backButton.addActionListener(e -> dispose());
         mainPanel.add(backButton);
 
         add(mainPanel);
     }
 
+    private void handleCreateAccount() {
+        String firstName = firstNameField.getText().trim();
+        String lastName = lastNameField.getText().trim();
+        String username = usernameField.getText().trim();
+        String email = emailField.getText().trim();
+        String password = new String(passwordField.getPassword());
+        String confirmPassword = new String(confirmPasswordField.getPassword());
+        String gender = (String) genderComboBox.getSelectedItem();
+
+        if (!validateUserInput(username, email, password, confirmPassword)) {
+            JOptionPane.showMessageDialog(this,
+                    "Please fill all fields and ensure passwords match",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Create new user object
+        users newUser = new users();
+        newUser.setFirstName(firstName);
+        newUser.setLastName(lastName);
+        newUser.setPass(password);
+        newUser.setEmail(email);
+        newUser.setGender(gender);
+        newUser.setLimit(5); // Default borrowing limit
+
+        // Try to add user to database
+        if (USER_DB.add(newUser)) {
+            JOptionPane.showMessageDialog(this,
+                    "Account created successfully!",
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+            dispose(); // Close the registration window
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to create account. Please try again.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Existing helper methods remain the same...
     private JTextField createTransparentTextField() {
         JTextField field = new JTextField() {
             @Override
@@ -199,5 +269,20 @@ public class CreateAccountPage extends JFrame {
         });
 
         return button;
+    }
+    // (createTransparentTextField, createTransparentPasswordField, createStyledButton)
+
+    public boolean validateUserInput(String username, String email, String password, String confirmpass) {
+        if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmpass.isEmpty() ||
+                firstNameField.getText().trim().isEmpty() || lastNameField.getText().trim().isEmpty()) {
+            return false;
+        }
+        if (!password.equals(confirmpass)) {
+            return false;
+        }
+        if (!email.contains("@") || !email.contains(".")) {
+            return false;
+        }
+        return true;
     }
 }
