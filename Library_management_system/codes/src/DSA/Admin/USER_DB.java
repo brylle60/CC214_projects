@@ -158,4 +158,36 @@ public class USER_DB {
 
         return null;
     }
+    public boolean deleteUser(int id) {
+        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement del = connection.prepareStatement("DELETE FROM " + DB_Connection.tab + " WHERE Id = ?")) {
+
+            // First check if user exists
+            if (!checkUser(id)) {
+                System.out.println("No user found with ID: " + id);
+                return false;
+            }
+
+            del.setInt(1, id);
+            int rowsAffected = del.executeUpdate();
+
+            if (rowsAffected > 0) {
+                // Remove from cache if successfully deleted from database
+                userCache.remove(id);
+                System.out.println("User deleted successfully");
+                return true;
+            } else {
+                System.out.println("Failed to delete user with ID: " + id);
+                return false;
+            }
+
+        } catch (SQLException e) {
+            if (e.getSQLState().equals("23000")) { // Foreign key constraint violation
+                System.out.println("Cannot delete user: User has associated records");
+            } else {
+                System.out.println("Error deleting user: " + e.getMessage());
+            }
+            return false;
+        }
+    }
 }
