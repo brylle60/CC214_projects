@@ -49,6 +49,7 @@ public class MySQLbookDb {
     }
     //todo applly this in the admin control class
 
+
     public static boolean delete(int ID) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
              // Remove the * from DELETE query - it's not needed
@@ -70,31 +71,52 @@ public class MySQLbookDb {
             throw new RuntimeException(e);
         }
     }
-    public static List<Books> LoadBooks(){
-        List<Books> book = new ArrayList<>();
-        try {
-            Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
-            PreparedStatement BoookInfo = connection.prepareStatement("SELECT * FROM "+DB_Connection.BookTable);
+    public static List<Books> LoadBooks() {
+        List<Books> books = new ArrayList<>();
 
-            ResultSet resultSet = BoookInfo.executeQuery();
+        try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+             Statement stmt = connection.createStatement();
+             ResultSet resultSet = stmt.executeQuery("SELECT * FROM " + DB_Connection.BookTable)) {
 
-            while(resultSet.next()){
+            while (resultSet.next()) {
                 int id = resultSet.getInt("Id");
                 String title = resultSet.getString("Title");
                 String genre = resultSet.getString("Genre");
                 String author = resultSet.getString("Author");
-                Date datepub = resultSet.getDate("Date Published");
+                Date datepub = resultSet.getDate("Publish_Date");
                 int copies = resultSet.getInt("Copies");
-                int totalCopies = resultSet.getInt("Total Copies");
+                int totalCopies = resultSet.getInt("Total_Copies");
 
-                Books books = new Books(id, title, author, datepub, copies, totalCopies);
-
+                Books book = new Books(id, title, genre, author, datepub, copies, totalCopies);
+                books.add(book);
             }
-
-        }catch (SQLException e){
+        } catch (SQLException e) {
+            System.err.println("Error loading books: " + e.getMessage());
             e.printStackTrace();
         }
-        return book;
+        return books;
+    }
+
+
+public static boolean UpdateBook(int Id, String title, String genre, String author, LocalDateTime Datepub, int copies, int totalCopies) {
+        try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement update = connection.prepareStatement("UPDATE " + DB_Connection.BookTable +
+                     " SET Title=?, Genre=?, Author=?, Publish_date=?, Copies=?, Total_copies=? WHERE Id=?")) {
+
+            update.setString(1, title);
+            update.setString(2, genre);
+            update.setString(3, author);
+            update.setTimestamp(4, Timestamp.valueOf(Datepub));
+            update.setInt(5, copies);
+            update.setInt(6, totalCopies);
+            update.setInt(7, Id);  // WHERE clause parameter
+
+            int rowsAffected = update.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
     public static void updateBookCopies(int isbn, int availableCopies) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
@@ -109,4 +131,5 @@ public class MySQLbookDb {
             throw new RuntimeException("Failed to update book copies: " + e.getMessage(), e);
         }
     }
+
 }

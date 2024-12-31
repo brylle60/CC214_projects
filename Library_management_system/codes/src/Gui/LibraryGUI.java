@@ -18,7 +18,7 @@ public class LibraryGUI extends JFrame {
         setSize(900, 600);
         setLocationRelativeTo(null);
 
-        // Load the image
+        // Load the image //need the absolute path and the picture for this
         try {
             bookshelfImage = ImageIO.read(new File("C:\\Users\\janlo\\IdeaProjects\\LIBRARY MANAGEMENT\\src\\bookshelf.jpg"));
         } catch (IOException e) {
