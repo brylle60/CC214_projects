@@ -1,8 +1,18 @@
-package Gui;
+package Gui.Admin;
+
+import DSA.Admin.DB_Connection;
+import DSA.Admin.MySQLbookDb;
+import DSA.Objects.Books;
+import Gui.LibraryGUI;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.List;
 
 public class AdminDashboard extends JFrame {
     private static final Color BACKGROUND_COLOR = new Color(240, 240, 240);
@@ -13,7 +23,7 @@ public class AdminDashboard extends JFrame {
     public AdminDashboard() {
         setTitle("Admin Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 600);
+        setSize(1170, 600);
         setLocationRelativeTo(null);
 
         // Create main panel
@@ -47,11 +57,30 @@ public class AdminDashboard extends JFrame {
         JButton reportsBtn = createStyledButton("Reports and Logs");
         JButton overdueBtn = createStyledButton("Overdue Book Management");
 
-        // Add action listeners
+
+        // Add buttons to panel
+        buttonsPanel.add(bookInventoryBtn);
+        buttonsPanel.add(userAccountBtn);
+        buttonsPanel.add(reportsBtn);
+        buttonsPanel.add(overdueBtn);
+
+        // Add buttons panel to main panel
+        mainPanel.add(buttonsPanel);
+
+        // Create content panel (right side)
+        JPanel contentPanel = new JPanel();
+        contentPanel.setBounds(290, 100, 840, 400);
+        contentPanel.setBorder(BorderFactory.createLineBorder(DARK_GREEN));
+        contentPanel.setBackground(Color.WHITE);
+        mainPanel.add(contentPanel);
+
+//         Add action listeners
         bookInventoryBtn.addActionListener(e -> {
-            // Create and show the BookInventoryDashboard
-//            BookInventoryDashboard bookDashboard = new BookInventoryDashboard();
-//            bookDashboard.setVisible(true);
+            contentPanel.removeAll();  // Clear existing content
+            BookInventoryDashboard bookDashboard = new BookInventoryDashboard();
+            contentPanel.add(bookDashboard, BorderLayout.CENTER);
+            contentPanel.revalidate();
+            contentPanel.repaint();
         });
 
         userAccountBtn.addActionListener(e -> {
@@ -69,25 +98,9 @@ public class AdminDashboard extends JFrame {
             System.out.println("Overdue Book Management clicked");
         });
 
-        // Add buttons to panel
-        buttonsPanel.add(bookInventoryBtn);
-        buttonsPanel.add(userAccountBtn);
-        buttonsPanel.add(reportsBtn);
-        buttonsPanel.add(overdueBtn);
-
-        // Add buttons panel to main panel
-        mainPanel.add(buttonsPanel);
-
-        // Create content panel (right side)
-        JPanel contentPanel = new JPanel();
-        contentPanel.setBounds(290, 100, 580, 400);
-        contentPanel.setBorder(BorderFactory.createLineBorder(DARK_GREEN));
-        contentPanel.setBackground(Color.WHITE);
-        mainPanel.add(contentPanel);
-
         // Add logout button
         JButton logoutButton = createStyledButton("Logout");
-        logoutButton.setBounds(750, 20, 100, 40);
+        logoutButton.setBounds(1025, 20, 100, 40);
         logoutButton.addActionListener(e -> {
             dispose();
             // Add code to return to login page
@@ -95,7 +108,6 @@ public class AdminDashboard extends JFrame {
             libraryGUI.setVisible(true);
         });
         mainPanel.add(logoutButton);
-
         add(mainPanel);
     }
 
@@ -144,7 +156,19 @@ public class AdminDashboard extends JFrame {
         return button;
     }
 
+
+
+    public static boolean testConnection() {
+        try (Connection conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass)) {
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public static void main(String[] args) {
+        testConnection();
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
