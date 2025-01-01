@@ -5,18 +5,19 @@ import java.sql.*;
 import java.util.Hashtable;
 
 public class USER_DB {
-    private Hashtable<Integer, users> userCache;
+    private static Hashtable<Integer, users> userCache;
 
     public USER_DB() {
         this.userCache = new Hashtable<>();
     }
 
     //todo not yet fixed
-    public boolean add(users user) {
+    public static boolean add(users user) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement(
                      "INSERT INTO " + DB_Connection.tab +
                              "(Id, lastname,firstname, password, email, Gender, `Limit`) VALUES(?, ?, ?, ?, ?, ?, ?)")) {
+
 
             register.setInt(1, user.getId());
             register.setString(2, user.getLastName());
@@ -44,7 +45,6 @@ public class USER_DB {
             return false;
         }
     }
-
     //todo needs GUI for registration
     public boolean validate(int id, String firstName, String password) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
@@ -58,47 +58,42 @@ public class USER_DB {
 
             ResultSet rs = valid.executeQuery();
             return rs.next();
-
-        } catch (SQLException e) {
-            System.out.println("Error validating user: " + e.getMessage());
-            return false;
-        }
     }
 
     //todo used to check for existing account
-    public boolean checkUser(int id) {
-        // First check cache
-        if (userCache.containsKey(id)) {
-            return true;
-        }
-
-        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
-             PreparedStatement check = connection.prepareStatement(
-                     "SELECT * FROM " + DB_Connection.tab + " WHERE Id = ?")) {
-
-            check.setInt(1, id);
-            ResultSet rs = check.executeQuery();
-
-            if (rs.next()) {
-                users user = new users(
-                        rs.getInt("Id"),
-                        rs.getString("lastname"),
-                        rs.getString("firstname"),
-                        rs.getString("password"),
-                        rs.getString("email"),
-                        rs.getString("Gender"),
-                        rs.getInt("limit")
-                );
-                userCache.put(id, user);
-                return true;
-            }
-            return false;
-
-        } catch (SQLException e) {
-            System.out.println("Error checking user: " + e.getMessage());
-            return false;
-        }
-    }
+//    public static boolean checkUser(int id) {
+//        // First check cache
+//        if (userCache.containsKey(id)) {
+//            return true;
+//        }
+//
+//        try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
+//             PreparedStatement check = connection.prepareStatement(
+//                     "SELECT * FROM " + DB_Connection.tab + " WHERE Id = ?")) {
+//
+//            check.setInt(1, id);
+//            ResultSet rs = check.executeQuery();
+//
+//            if (rs.next()) {
+//                users user = new users(
+//                        rs.getInt("Id"),
+//                        rs.getString("lastname"),
+//                        rs.getString("firstname"),
+//                        rs.getString("password"),
+//                        rs.getString("email"),
+//                        rs.getString("Gender"),
+//                        rs.getInt("limit")
+//                );
+//                userCache.put(id, user);
+//                return true;
+//            }
+//            return false;
+//
+//        } catch (SQLException e) {
+//            System.out.println("Error checking user: " + e.getMessage());
+//            return false;
+//        }
+//    }
 
     // todo used to display all users in table or for the future add delete user method
     public Hashtable<Integer, users> loadAllUsers() {
@@ -163,11 +158,11 @@ public class USER_DB {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement del = connection.prepareStatement("DELETE FROM " + DB_Connection.tab + " WHERE Id = ?")) {
 
-            // First check if user exists
-            if (!checkUser(id)) {
-                System.out.println("No user found with ID: " + id);
-                return false;
-            }
+//            // First check if user exists
+//            if (!checkUser(id)) {
+//                System.out.println("No user found with ID: " + id);
+//                return false;
+//            }
 
             del.setInt(1, id);
             int rowsAffected = del.executeUpdate();
