@@ -1,4 +1,5 @@
 package Gui.Admin;
+import DSA.Admin.AdminControls;
 import DSA.Admin.MySQLbookDb;
 import DSA.Objects.Books;
 
@@ -8,6 +9,8 @@ import java.awt.*;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.time.Instant;
+import java.time.ZoneId;
 
 public class BookInventoryDashboard extends JPanel {
     private final JTable table;
@@ -262,8 +265,15 @@ public class BookInventoryDashboard extends JPanel {
         String currentTitle = (String) table.getValueAt(selectedRow, 1);
         String currentGenre = (String) table.getValueAt(selectedRow, 2);
         String currentAuthor = (String) table.getValueAt(selectedRow, 3);
-        Date currentDate = (Date) table.getValueAt(selectedRow, 4);
-        int currentCopies = (int) table.getValueAt(selectedRow, 5);
+        Object dateValue = table.getValueAt(selectedRow, 4);
+        java.util.Date currentDate;
+        if (dateValue instanceof java.sql.Date) {
+            currentDate = (java.sql.Date) dateValue;
+        } else if (dateValue instanceof LocalDateTime) {
+            currentDate = java.sql.Date.valueOf(((LocalDateTime) dateValue).toLocalDate());
+        } else {
+            currentDate = new java.util.Date(); // fallback to current date
+        }        int currentCopies = (int) table.getValueAt(selectedRow, 5);
         int currentTotalCopies = (int) table.getValueAt(selectedRow, 6);
 
         // Create form fields with current values
@@ -302,13 +312,13 @@ public class BookInventoryDashboard extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton saveButton = createStyledButton("Save");
         JButton cancelButton = createStyledButton("Cancel");
-
         saveButton.addActionListener(e -> {
             try {
                 java.util.Date selectedDate = (java.util.Date) dateSpinner.getValue();
-                LocalDateTime publishDate = selectedDate.toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDateTime();
+                // Convert java.util.Date to LocalDateTime
+                Instant instant = selectedDate.toInstant();
+                LocalDateTime publishDate = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+
                 int copies = (Integer) copiesSpinner.getValue();
                 int totalCopies = (Integer) totalCopiesSpinner.getValue();
 
@@ -338,5 +348,51 @@ public class BookInventoryDashboard extends JPanel {
         dialog.setVisible(true);
     }
 
-    private void removeBook(){}
+    private void removeBook() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this,
+                    "Please select a book to remove.",
+                    "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int id = (int) table.getValueAt(selectedRow, 0);
+        String title = (String) table.getValueAt(selectedRow, 1);
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to remove the book:\n" +
+                        "Title: " + title + "\nID: " + id,
+                "Confirm Removal",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                if (MySQLbookDb.delete(id)) {
+                    // Also update the AdminControls instance to maintain consistency
+                    AdminControls.getInstance().refreshBooks();
+
+                    // Refresh the table data
+                    refreshTableData();
+
+                    JOptionPane.showMessageDialog(this,
+                            "Book removed successfully!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Failed to remove the book. Please try again.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (RuntimeException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Error removing book: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 }

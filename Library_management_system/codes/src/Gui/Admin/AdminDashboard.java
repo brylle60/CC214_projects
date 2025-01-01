@@ -23,7 +23,7 @@ public class AdminDashboard extends JFrame {
     public AdminDashboard() {
         setTitle("Admin Dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 600);
+        setSize(1170, 600);
         setLocationRelativeTo(null);
 
         // Create main panel
@@ -81,7 +81,6 @@ public class AdminDashboard extends JFrame {
             contentPanel.add(bookDashboard, BorderLayout.CENTER);
             contentPanel.revalidate();
             contentPanel.repaint();
-
         });
 
         userAccountBtn.addActionListener(e -> {
@@ -101,7 +100,7 @@ public class AdminDashboard extends JFrame {
 
         // Add logout button
         JButton logoutButton = createStyledButton("Logout");
-        logoutButton.setBounds(820, 20, 100, 40);
+        logoutButton.setBounds(1025, 20, 100, 40);
         logoutButton.addActionListener(e -> {
             dispose();
             // Add code to return to login page

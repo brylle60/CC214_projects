@@ -13,18 +13,18 @@ public class Books {
     public static final String BORROW_HISTORY_FILE = "borrow_history.csv";
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    private static int ISBN;
-    private static String title;
-    private static String author;
-    private static String genre;
-    private static LocalDateTime datePublished;
-    private static int availableCopy;
-    private static int totalCopy;
-
+    private int ISBN;
+    private  String title;
+    private  String author;
+    private  String genre;
+    private  LocalDateTime datePublished;
+    private int availableCopy;
+    private int totalCopy;
     private String currentBorrower;
-
-
     private LocalDateTime borrowDate;
+    private boolean borrowed;
+    private String borrower;
+    private boolean isAvailable;
 
     public Books(int id, String title, String genre, String author, Date datepub, int copies, int totalCopies) {
         this.ISBN = id;
@@ -56,31 +56,7 @@ public class Books {
         this.borrower = "";
     }
 
-    private boolean borrowed;
-    private String borrower;
-    private boolean isAvailable;
 
-
-
-    public static void setISBN(int ISBN) {
-        Books.ISBN = ISBN;
-    }
-
-    public static void setTitle(String title) {
-        Books.title = title;
-    }
-
-    public static void setAuthor(String author) {
-        Books.author = author;
-    }
-
-    public static void setDatePublished(LocalDateTime datePublished) {
-        Books.datePublished = datePublished;
-    }
-
-    public static void setTotalCopy(int totalCopy) {
-        Books.totalCopy = totalCopy;
-    }
 
     public void setCurrentBorrower(String currentBorrower) {
         this.currentBorrower = currentBorrower;
@@ -91,10 +67,7 @@ public class Books {
     }
     public void setBorrowDate(LocalDateTime borrowDate) {this.borrowDate = borrowDate;}
 
-    public static String getGenre() {return genre;}
-
-    public static void setGenre(String genre) {Books.genre = genre;}
-
+    public  String getGenre() {return genre;}
 
     // Getters and setters
     public int getISBN() {
@@ -147,7 +120,6 @@ public class Books {
     public void setBorrower(String borrower) {
         this.borrower = (borrower != null) ? borrower : "";
     }
-
 
     public boolean isAvailable() {
         return availableCopy > 0;
