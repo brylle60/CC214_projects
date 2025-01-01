@@ -84,8 +84,11 @@ public class AdminDashboard extends JFrame {
         });
 
         userAccountBtn.addActionListener(e -> {
-            // Add user account management functionality
-            System.out.println("User Account Management clicked");
+            contentPanel.removeAll();  // Clear existing content
+            UserAccountDashboard userAccountDashboard = new UserAccountDashboard();
+            contentPanel.add(userAccountDashboard, BorderLayout.CENTER);
+            contentPanel.revalidate();
+            contentPanel.repaint();
         });
 
         reportsBtn.addActionListener(e -> {
