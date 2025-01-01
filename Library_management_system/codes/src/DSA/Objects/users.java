@@ -10,7 +10,7 @@ public class users {
     private int limit;
 
 
-    public users(int Id, String lastName, String pass, String email, String firstName, String Gender, int limit){
+    public users(int Id, String lastName, String firstName, String pass, String email, String Gender, int limit){
         this.Id = Id;
         this.lastName = lastName;
         this.pass = pass;
@@ -71,10 +71,12 @@ public class users {
         lastName = lastname;
     }
 
+
+    public void setLimit(int limit) {
+        this.limit = 3;
+    }
+
     public int getLimit() {
-        if (limit>3){
-            return -1;
-        }
         return limit;
     }
 }
