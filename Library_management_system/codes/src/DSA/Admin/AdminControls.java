@@ -2,6 +2,8 @@ package DSA.Admin;
 
 import DSA.Objects.Books;
 import DSA.Objects.BorrowedHistory;
+import DSA.UserControl.Return;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,12 +13,11 @@ import java.util.Optional;
 import java.sql.SQLException;
 
 public class AdminControls {
-    private final List<Books> books;
+    private static List<Books> books;
     private static AdminControls instance;
 
     private AdminControls() {
-        this.books = new ArrayList<>();
-        loadBooks();
+        loadBooks();  // Load books in constructor
     }
 
     public static AdminControls getInstance() {
@@ -30,14 +31,19 @@ public class AdminControls {
         try {
             List<Books> loadedBooks = MySQLbookDb.LoadBooks();
             if (loadedBooks != null) {
-                this.books.clear(); // Clear existing books before loading
-                this.books.addAll(loadedBooks);
+                books.clear();  // Clear existing books before loading
+                books.addAll(loadedBooks);
                 sortBooks();
+            } else {
+                books = new ArrayList<>();  // Initialize empty list if load fails
             }
         } catch (Exception e) {
             System.err.println("Error loading books: " + e.getMessage());
+            e.printStackTrace();
+            books = new ArrayList<>();  // Initialize empty list if exception occurs
         }
     }
+
 
     public void addBook(Books book) {
         if (book == null) {
@@ -66,35 +72,47 @@ public class AdminControls {
         book.addBooks(); // Persist to database
     }
 
-    public boolean borrowBook(String title, int userId, String lastName, String author, int copies) {
+    // In AdminControls.java, update the borrowBook method:
+    public static boolean borrowBook(int userId, String title, String lastName, String author, int copies) {
+        if (title == null || title.trim().isEmpty() || lastName == null || lastName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Invalid input parameters");
+        }
+
         Optional<Books> bookOpt = books.stream()
-                .filter(b -> b.getTitle().equals(title) && b.isAvailable() && b.getAvailableCopy() >= copies)
+                .filter(b -> b.getTitle().equals(title) && b.isAvailable())
                 .findFirst();
 
         if (bookOpt.isPresent()) {
             Books book = bookOpt.get();
 
-            // Update book state
-            LocalDateTime currentTime = LocalDateTime.now();
-            book.setBorrowDate(currentTime);
-            book.setAvailableCopy(book.getAvailableCopy() - copies);
-
-            // Update database
             try {
+                // Calculate new available copies
+                int newAvailableCopies = book.getAvailableCopy() - 1;  // Always borrow 1 copy
+
+                // Update database first
+                System.out.println("Updating book copies - ISBN: " + book.getISBN() + ", New copies: " + newAvailableCopies);
+                MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
+
+                // If database update successful, update book object
+                book.setAvailableCopy(newAvailableCopies);
+
                 // Create borrow record
                 BorrowedHistory borrowedHistory = new BorrowedHistory(
-                        userId, lastName, title, author, copies, "BORROWED"
+                        userId,
+                        lastName,
+                        title,
+                        author,
+                        1,  // Always borrow 1 copy
+                        "BORROWED"
                 );
-                borrowedHistory.borrowbooks();
 
-                // Update book copies in database
-                MySQLbookDb.updateBookCopies(book.getISBN(), book.getAvailableCopy());
+                // Record the borrow transaction
+                borrowedHistory.borrowbooks();
 
                 return true;
             } catch (Exception e) {
-                // Rollback local changes if database update fails
-                book.setAvailableCopy(book.getAvailableCopy() + copies);
-                System.err.println("Error processing borrow: " + e.getMessage());
+                System.err.println("Error in borrowBook: " + e.getMessage());
+                e.printStackTrace();
                 return false;
             }
         }
@@ -111,8 +129,8 @@ public class AdminControls {
 
             try {
                 // Use the Return class we fixed earlier
-                DSA.UserControl.Return.ReturnResult result =
-                        DSA.UserControl.Return.processReturn(title, userName);
+                Return.ReturnResult result =
+                        Return.processReturn(title, userName);
 
                 if (result.isSuccess()) {
                     // Update local state
