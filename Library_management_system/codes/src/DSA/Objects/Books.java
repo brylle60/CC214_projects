@@ -42,18 +42,8 @@ public class Books {
     }
 
     // Keep your existing LocalDateTime constructor
-    public Books(int ISBN, String title, String genre, String author, LocalDateTime datePublished, int availableCopy, int totalCopy) {
-        this.ISBN = ISBN;
-        this.title = title;
-        this.genre = genre;
-        this.author = author;
-        this.datePublished = datePublished;
-        this.availableCopy = availableCopy;
-        this.totalCopy = totalCopy;
-        this.currentBorrower = "";
-        this.borrowDate = LocalDateTime.now();
-        this.borrowed = false;
-        this.borrower = "";
+    public Books() {
+
     }
 
 
@@ -124,73 +114,7 @@ public class Books {
     public boolean isAvailable() {
         return availableCopy > 0;
     }
-//
-//    /**
-//    *@param: to Csv methods
-//    */
-//    public String toCSV() {
-//        return String.join(",",
-//                String.valueOf(ISBN),
-//                escapeCSV(title),
-//                escapeCSV(author),
-//                String.valueOf(datePublished),
-//                String.valueOf(availableCopy),
-//                String.valueOf(totalCopy)
-//        );
-//    }
-///**
-// * @param: to csv
-// * */
-//
-//    public static Books fromCSV(String csvLine) {
-//        if (csvLine == null || csvLine.trim().isEmpty()) {
-//            return null;
-//        }
-//
-//        String[] parts = csvLine.split(",");
-//        if (parts.length < 6) {
-//            throw new IllegalArgumentException("Invalid CSV format");
-//        }
-//
-//        return new Books(
-//                Integer.parseInt(parts[0].trim()),
-//                unescapeCSV(parts[1]),
-//                unescapeCSV(parts[2]),
-////                LocalDateTime.parse(parts[3].trim()),
-//                Integer.parseInt(parts[4].trim()),
-//                Integer.parseInt(parts[5].trim())
-//        );
-//    }
-//    /**
-//     * @param: this one will the one that will format the .csv file
-//     * like an excel like
-//     * */
-//    public static String escapeCSV(String value) {
-//        if (value == null) return "";
-//        return value.replace(",", "\\,")
-//                .replace("\n", "\\n")
-//                .replace("\r", "\\r");
-//    }
-//    /**
-//     * @param: this one will the one that will format the .csv file
-//     * like an excel like
-//     * */
-//    public static String unescapeCSV(String value) {
-//        if (value == null) return "";
-//        return value.replace("\\,", ",")
-//                .replace("\\n", "\n")
-//                .replace("\\r", "\r");
-//    }
-//
-//    /**
-//     * @param; this one sets the local date
-//     * */
-//    public void setBorrowDate(LocalDateTime borrowDate) {
-//        this.borrowDate = borrowDate;
-//    }
-///**
-// * @param: add books to the DataBase
-// * */
+
 
     public void addBooks() {  // Make this non-static
         String genre = "";  // You might want to add genre as a class property
