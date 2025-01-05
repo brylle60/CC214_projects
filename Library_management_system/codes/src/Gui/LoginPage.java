@@ -107,13 +107,25 @@ public class LoginPage extends JFrame {
         try {
             int id = Integer.parseInt(idText);
             if (USER_DB.validate(id, password)) {
-                JOptionPane.showMessageDialog(this,
-                        "Login successful!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
-                UserDashboard userDashboard = new UserDashboard();
-                userDashboard.setVisible(true);
-                this.dispose();
+                // Create a new USER_DB instance to use its methods
+                USER_DB userDb = new USER_DB();
+                // Get the user object
+                users loggedInUser = userDb.getUser(id);
+
+                if (loggedInUser != null) {
+                    JOptionPane.showMessageDialog(this,
+                            "Login successful!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    UserDashboard userDashboard = new UserDashboard(loggedInUser);
+                    userDashboard.setVisible(true);
+                    this.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Error retrieving user data",
+                            "Login Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             } else {
                 JOptionPane.showMessageDialog(this,
                         "Invalid credentials",
@@ -127,12 +139,10 @@ public class LoginPage extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-
     private void openCreateAccountPage() {
         CreateAccountPage createAccountPage = new CreateAccountPage();
         createAccountPage.setVisible(true);
     }
-
     // Rest of the existing methods remain the same...
 
     // Existing helper methods remain the same...

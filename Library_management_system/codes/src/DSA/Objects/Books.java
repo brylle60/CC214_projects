@@ -76,6 +76,7 @@ public class Books {
         return datePublished;
     }
 
+    //todo if the available is == 0 return false;
     public int getAvailableCopy() {
         return availableCopy;
     }
@@ -84,7 +85,9 @@ public class Books {
         return totalCopy;
     }
 
-    public void setAvailableCopy(int availableCopy) {this.availableCopy = availableCopy;}
+    public int setAvailableCopy(int availableCopy) {this.availableCopy = availableCopy;
+        return availableCopy;
+    }
 
 
     public String getCurrentBorrower() {
@@ -112,8 +115,12 @@ public class Books {
     }
 
     public boolean isAvailable() {
-        return availableCopy > 0;
+        if (availableCopy != 0) {
+            return true; // Return true if copies are available
+        }
+        return false;     // Return false if no copies are available
     }
+
 
 
     public void addBooks() {  // Make this non-static

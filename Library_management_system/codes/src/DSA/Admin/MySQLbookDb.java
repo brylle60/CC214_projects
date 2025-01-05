@@ -119,15 +119,26 @@ public static boolean UpdateBook(int Id, String title, String genre, String auth
         }
     }
     public static void updateBookCopies(int isbn, int availableCopies) {
+        System.out.println("Updating book with ISBN: " + isbn + ", New copies: " + availableCopies);
+
+        if (isbn <= 0 || availableCopies < 0) {
+            throw new IllegalArgumentException("Invalid ISBN or copy count");
+        }
+
         try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
              PreparedStatement update = connection.prepareStatement(
                      "UPDATE " + DB_Connection.BookTable + " SET Copies = ? WHERE Id = ?")) {
 
             update.setInt(1, availableCopies);
             update.setInt(2, isbn);
-            update.executeUpdate();
+
+            int rowsUpdated = update.executeUpdate();
+            if (rowsUpdated == 0) {
+                throw new SQLException("Book with ISBN " + isbn + " not found");
+            }
 
         } catch (SQLException e) {
+            System.err.println("Database error updating copies: " + e.getMessage());
             throw new RuntimeException("Failed to update book copies: " + e.getMessage(), e);
         }
     }

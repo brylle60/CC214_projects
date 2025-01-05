@@ -1,12 +1,15 @@
 package Gui;
 
+import DSA.Admin.AdminControls;
+import DSA.Admin.Borrowed_requests;
+import DSA.Admin.BorrowingHistory;
 import DSA.Admin.MySQLbookDb;
 import DSA.Objects.Books;
+import DSA.Objects.users;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class UserDashboard extends JFrame {
@@ -15,9 +18,12 @@ public class UserDashboard extends JFrame {
     private JPanel mainPanel;
     private JTable bookTable;
     private DefaultTableModel tableModel;
+    private final users currentUser;
 
-    public UserDashboard() {
-        setTitle("Library Management System");
+    public UserDashboard(users currentUser) {
+        this.currentUser = currentUser;
+        setTitle("Library Management System - Welcome " +
+                (currentUser != null ? currentUser.getFirstName() + " " + currentUser.getLastName() : "Guest"));
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -40,6 +46,10 @@ public class UserDashboard extends JFrame {
         profilePicture.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JTextField nameField = new JTextField("Name");
         nameField.setMaximumSize(new Dimension(150, 25));
+        if (currentUser != null) {
+            nameField.setText(currentUser.getFirstName() + " " + currentUser.getLastName());
+            nameField.setEditable(false);
+        }
 
         profilePanel.add(profilePicture);
         profilePanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -97,9 +107,19 @@ public class UserDashboard extends JFrame {
         // Add main panel to frame
         add(mainPanel);
 
+
         // Add action listeners
         searchButton.addActionListener(e -> searchBooks());
-        borrowButton.addActionListener(e -> borrowBook(new Books(), "User")); // Example usage of borrowBook
+        borrowButton.addActionListener(e -> {
+            if (currentUser != null) {
+                borrowBook(null, currentUser);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Please log in to borrow books.",
+                        "Login Required",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+        }); // Example usage of borrowBook
         returnButton.addActionListener(e -> returnBook());
         profileButton.addActionListener(e -> showProfile());
         historyButton.addActionListener(e -> showHistory());
@@ -109,25 +129,35 @@ public class UserDashboard extends JFrame {
     }
 
     private void loadBooks() {
-        // Clear previous data from table
-        tableModel.setRowCount(0);
+        try {
+            // Clear previous data from table
+            tableModel.setRowCount(0);
 
-        // Fetch available books from the database
-        List<Books> books = MySQLbookDb.LoadBooks();
-        for (Books book : books) {
-            if (book.isAvailable()) {  // Only show available books
-                tableModel.addRow(new Object[]{
-                        book.getISBN(),
-                        book.getTitle(),
-                        book.getAuthor(),
-                        book.getGenre(),
-                        book.getAvailableCopy(),
-                        book.getTotalCopy()
-                });
+            // Get AdminControls instance and fetch books
+            List<Books> books = MySQLbookDb.LoadBooks();
+            if (books != null) {
+                for (Books book : books) {
+                    if (book.isAvailable()) {  // Only show available books
+                        tableModel.addRow(new Object[]{
+                                book.getISBN(),
+                                book.getTitle(),
+                                book.getAuthor(),
+                                book.getGenre(),
+                                book.getAvailableCopy(),
+                                book.getTotalCopy()
+                        });
+                    }
+                }
             }
+        } catch (Exception e) {
+            System.err.println("Error loading books: " + e.getMessage());
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Error loading books. Please try again later.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
-
     private void sortBooks() {
         String selectedSort = (String) sortByComboBox.getSelectedItem();
         List<Books> books = MySQLbookDb.LoadBooks();
@@ -186,16 +216,98 @@ public class UserDashboard extends JFrame {
         }
     }
 
-    private void borrowBook(Books book, String borrowerName) {
-        // Implement borrowing logic
-        if (book.isAvailable()) {
-            book.setAvailableCopy(book.getAvailableCopy() - 1);
-            JOptionPane.showMessageDialog(this, "Book borrowed successfully!");
-        } else {
-            JOptionPane.showMessageDialog(this, "Sorry, this book is currently unavailable.");
+    // In UserDashboard.java, update the borrowBook method:
+    private void borrowBook(Books book, users user) {
+        // Get the selected row from the table
+        int selectedRow = bookTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a book to borrow.");
+            return;
+        }
+
+        // Get book details from the selected row
+        int isbn = (int) tableModel.getValueAt(selectedRow, 0);
+        String title = (String) tableModel.getValueAt(selectedRow, 1);
+        String author = (String) tableModel.getValueAt(selectedRow, 2);
+        int availableCopies = (int) tableModel.getValueAt(selectedRow, 4);
+
+        // Get user's current borrowed count
+        List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(user.getLastName());
+        long currentBorrowedCount = userHistory.stream()
+                .filter(history -> history.getStatus().equals("BORROWED"))
+                .count();
+
+        // Check if user has reached their borrowing limit (3 books)
+        if (currentBorrowedCount >= 3) {
+            JOptionPane.showMessageDialog(this,
+                    "You have reached your maximum limit of 3 borrowed books. Please return some books first.",
+                    "Borrowing Limit Reached",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Check if copies are available
+        if (availableCopies <= 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Sorry, this book is currently unavailable.",
+                    "No Copies Available",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+//        // Check if user already has a copy of this book
+//        boolean alreadyBorrowed = userHistory.stream()
+//                .anyMatch(history -> history.getBooktitle().equals(title) &&
+//                        history.getLastName().equals(user.getLastName()) &&
+//                        history.getStatus().equals("BORROWED"));
+
+//        if (alreadyBorrowed) {
+//            JOptionPane.showMessageDialog(this,
+//                    "You already have a copy of this book. You can only borrow one copy of each book.",
+//                    "Already Borrowed",
+//                    JOptionPane.WARNING_MESSAGE);
+//            return;
+//        }
+
+        // Confirm borrow
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Do you want to borrow '" + title + "'?\n" +
+                        "You can borrow " + (3 - currentBorrowedCount) + " more book(s).",
+                "Confirm Borrow",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                // Process the borrow request - always borrow 1 copy
+                boolean success = AdminControls.borrowBook(user.getId(), title, user.getLastName(), author, 1);
+
+                if (success) {
+                    // Update the table
+                    tableModel.setValueAt(availableCopies - 1, selectedRow, 4);
+
+                    JOptionPane.showMessageDialog(this,
+                            "Book borrowed successfully!\n" +
+                                    "Please return within 14 days to avoid late fees.\n" +
+                                    "You can borrow " + (2 - currentBorrowedCount) + " more book(s).",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    // Refresh the book list
+                    loadBooks();
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Failed to borrow book. Please try again.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                        "An error occurred: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
-
     private void returnBook() {
         JOptionPane.showMessageDialog(this, "Return functionality to be implemented");
     }
@@ -219,8 +331,9 @@ public class UserDashboard extends JFrame {
     }
 
     public static void main(String[] args) {
+        users loggedInUser = null;
         SwingUtilities.invokeLater(() -> {
-            UserDashboard userDashboard = new UserDashboard();
+            UserDashboard userDashboard = new UserDashboard(loggedInUser);
             userDashboard.setVisible(true);
         });
     }
