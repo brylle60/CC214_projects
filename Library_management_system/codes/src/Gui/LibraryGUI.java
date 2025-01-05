@@ -17,10 +17,10 @@ public class LibraryGUI extends JFrame {
         setSize(900, 600);
         setLocationRelativeTo(null);
 
-        // Load the image
+        // Load the image from resources
         try {
             // Ensure bookshelf.jpg is located in the "resources" folder of your project
-            bookshelfImage = ImageIO.read(getClass().getResourceAsStream("/bookshelf.jpg"));
+            bookshelfImage = ImageIO.read(getClass().getResource("/Images/bookshelf.jpg"));
         } catch (IOException e) {
             System.err.println("Bookshelf image could not be loaded: " + e.getMessage());
             bookshelfImage = null; // Fallback

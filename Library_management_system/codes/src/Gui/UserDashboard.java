@@ -127,7 +127,9 @@ public class UserDashboard extends JFrame {
                 "Confirm Logout",
                 JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
-            System.exit(0);
+            LoginPage loginPage = new LoginPage(); // Instantiate the LoginPage class
+            loginPage.setVisible(true);
+            this.dispose();
         }
     }
 
