@@ -92,8 +92,11 @@ public class AdminDashboard extends JFrame {
         });
 
         reportsBtn.addActionListener(e -> {
-            // Add reports functionality
-            System.out.println("Reports and Logs clicked");
+            contentPanel.removeAll();  // Clear existing content
+            ReportsDashboard reportsDashboard = new ReportsDashboard();
+            contentPanel.add(reportsDashboard, BorderLayout.CENTER);
+            contentPanel.revalidate();
+            contentPanel.repaint();
         });
 
         overdueBtn.addActionListener(e -> {
