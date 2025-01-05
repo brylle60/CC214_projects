@@ -5,12 +5,11 @@ import java.sql.*;
 import java.util.Hashtable;
 
 public class USER_DB {
-    private static Hashtable<Integer, users> userCache;
+    private static Hashtable<Integer, users> userCache = new Hashtable<>();  // Initialize here
 
     public USER_DB() {
-        this.userCache = new Hashtable<>();
+        // Constructor can be empty now since we initialize the cache above
     }
-
     public static boolean add(users user) {
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement(
@@ -90,8 +89,8 @@ public class USER_DB {
         }
     }
 
-    public Hashtable<Integer, users> loadAllUsers() {
-        userCache.clear(); // Clear the cache before reloading
+        public Hashtable<Integer, users> loadAllUsers() {
+            userCache.clear(); // Clear the cache before reloading
 
         try (Connection connection = DriverManager.getConnection(DB_Connection.url, DB_Connection.user, DB_Connection.pass);
              PreparedStatement stmt = connection.prepareStatement("SELECT * FROM " + DB_Connection.tab);

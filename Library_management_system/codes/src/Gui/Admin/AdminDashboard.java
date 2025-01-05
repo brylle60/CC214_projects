@@ -1,18 +1,14 @@
 package Gui.Admin;
 
 import DSA.Admin.DB_Connection;
-import DSA.Admin.MySQLbookDb;
-import DSA.Objects.Books;
 import Gui.LibraryGUI;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.List;
 
 public class AdminDashboard extends JFrame {
     private static final Color BACKGROUND_COLOR = new Color(240, 240, 240);
