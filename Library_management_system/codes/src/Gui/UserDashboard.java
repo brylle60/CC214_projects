@@ -317,8 +317,53 @@ public class UserDashboard extends JFrame {
     }
 
     private void showHistory() {
-        JOptionPane.showMessageDialog(this, "History view to be implemented");
+        // Create a new JFrame to show the history
+        JFrame historyFrame = new JFrame("Borrowing History");
+        historyFrame.setSize(800, 400);
+        historyFrame.setLocationRelativeTo(null);
+
+        // Create a table model with relevant columns for history
+        DefaultTableModel historyTableModel = new DefaultTableModel();
+        historyTableModel.setColumnIdentifiers(new String[]{"Book Title", "Author", "Date Borrowed", "Status"});
+
+        // Create JTable and JScrollPane
+        JTable historyTable = new JTable(historyTableModel);
+        JScrollPane scrollPane = new JScrollPane(historyTable);
+
+        // Fetch user's borrowing history from BorrowingHistory or equivalent
+        try {
+            // Retrieve borrowing history of the logged-in user
+            List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(currentUser.getLastName());
+
+            // Iterate over each borrowed request
+            for (Borrowed_requests.BorrowRequest request : userHistory) {
+                // Fetch the book details using the ISBN of the borrowed book
+                Books book = request.getBook();  // Assuming the BorrowRequest has a getBook() method
+
+                if (book != null) {
+                    // Add a row to the history table for each borrow entry
+                    historyTableModel.addRow(new Object[]{
+                            book.getTitle(),
+                            book.getAuthor(),
+                            request.getBorrowReqDate().format(Books.DATE_FORMATTER),  // Format the date as needed
+                            request.getStatus() // Status can be "BORROWED", "RETURNED", etc.
+                    });
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error loading borrowing history: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        // Add the table to the frame
+        historyFrame.add(scrollPane, BorderLayout.CENTER);
+
+        // Make the history frame visible
+        historyFrame.setVisible(true);
     }
+
 
     private void logout() {
         int response = JOptionPane.showConfirmDialog(this,
