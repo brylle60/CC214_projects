@@ -10,10 +10,16 @@ import java.util.List;
 public class BorrowingHistory {
 
     // Method to add borrowed history record
-    public static boolean BorrowedHistory(int ID, String userName, String booktitle, String Author, int copies, String Status){
+    public static boolean BorrowedHistory(int ID, String userName, String booktitle, String Author, int copies, String Status) {
+        // Check if this borrow record already exists
+        if (checkBorrowExists(ID, booktitle)) {
+            System.out.println("This book has already been borrowed by the user.");
+            return false;  // Skip or return false to indicate the record was not inserted
+        }
+
         try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement("INSERT INTO " + DB_Connection.HistoryTable +
-                     "(Id, UserName, BookName, Author, Copies, Status) VALUES(?, ?, ?, ?, ?, ?)"))  {
+                     "(Id, UserName, BookName, Author, Copies, Status) VALUES(?, ?, ?, ?, ?, ?)")) {
 
             register.setInt(1, ID);
             register.setString(2, userName);
@@ -23,11 +29,14 @@ public class BorrowingHistory {
             register.setString(6, Status);
 
             register.executeUpdate();
-            return true;
-        } catch (RuntimeException | SQLException e) {
-            throw new RuntimeException(e);
+            return true;  // Successfully added record
+
+        } catch (SQLException e) {
+            System.err.println("Error inserting borrowed history: " + e.getMessage());
+            throw new RuntimeException(e);  // Rethrow exception if an error occurs
         }
     }
+
 
     // Load all borrowing and return history
     public static List<Borrowed_requests.BorrowRequest> LoadAllHistory() {
@@ -171,12 +180,18 @@ public class BorrowingHistory {
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
+                    Date publishedDate = resultSet.getDate("DatePublished");
+                    // Check if DatePublished is null
+                    if (publishedDate == null) {
+                        publishedDate = Date.valueOf("1900-01-01"); // Or some default value
+                    }
+
                     return new Books(
                             resultSet.getInt("ISBN"),
                             resultSet.getString("Title"),
                             resultSet.getString("Genre"),
                             resultSet.getString("Author"),
-                            resultSet.getDate("DatePublished"),
+                            publishedDate,
                             resultSet.getInt("AvailableCopy"),
                             resultSet.getInt("TotalCopy")
                     );

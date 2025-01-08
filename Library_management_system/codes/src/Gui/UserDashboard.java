@@ -347,10 +347,14 @@ public class UserDashboard extends JFrame {
         JFrame historyFrame = new JFrame("Borrowing History");
         historyFrame.setSize(800, 400);
         historyFrame.setLocationRelativeTo(null);
+        historyFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);  // Ensure the window can be closed properly
+
+        // Set layout to BorderLayout to ensure components are added correctly
+        historyFrame.setLayout(new BorderLayout());
 
         // Create a table model with relevant columns for history
         DefaultTableModel historyTableModel = new DefaultTableModel();
-        historyTableModel.setColumnIdentifiers(new String[]{"Book Title", "Author", "Date Borrowed", "Status"});
+        historyTableModel.setColumnIdentifiers(new String[]{"ID", "User Name", "Book Name", "Author", "Copies", "Status"});
 
         // Create JTable and JScrollPane
         JTable historyTable = new JTable(historyTableModel);
@@ -360,19 +364,20 @@ public class UserDashboard extends JFrame {
         try {
             // Retrieve borrowing history of the logged-in user
             List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(currentUser.getLastName());
+            System.out.println("User history size: " + userHistory.size());
 
             // Iterate over each borrowed request
             for (Borrowed_requests.BorrowRequest request : userHistory) {
-                // Fetch the book details using the ISBN of the borrowed book
                 Books book = request.getBook();  // Assuming the BorrowRequest has a getBook() method
-
-                if (book != null) {
+                if (book != null && request != null) {
                     // Add a row to the history table for each borrow entry
                     historyTableModel.addRow(new Object[]{
-                            book.getTitle(),
-                            book.getAuthor(),
-                            request.getBorrowReqDate().format(Books.DATE_FORMATTER),  // Format the date as needed
-                            request.getStatus() // Status can be "BORROWED", "RETURNED", etc.
+                            request.getId(),                // Book ID or Borrow Request ID
+                            request.getUser(),          // User Name
+                            book.getTitle(),                // Book Title
+                            book.getAuthor(),               // Book Author
+                            request.getCopies(),            // Number of copies borrowed
+                            request.getStatus()             // Status can be "BORROWED", "RETURNED", etc.
                     });
                 }
             }
@@ -386,9 +391,14 @@ public class UserDashboard extends JFrame {
         // Add the table to the frame
         historyFrame.add(scrollPane, BorderLayout.CENTER);
 
-        // Make the history frame visible
-        historyFrame.setVisible(true);
+        // Make sure the history frame is visible in the EDT
+        SwingUtilities.invokeLater(() -> {
+            historyFrame.setVisible(true);
+        });
     }
+
+
+
 
 
     private void logout() {
