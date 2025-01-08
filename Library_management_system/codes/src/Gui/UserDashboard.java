@@ -218,35 +218,18 @@ public class UserDashboard extends JFrame {
 
     // In UserDashboard.java, update the borrowBook method:
     private void borrowBook(Books book, users user) {
-        // Get the selected row from the table
         int selectedRow = bookTable.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Please select a book to borrow.");
             return;
         }
 
-        // Get book details from the selected row
         int isbn = (int) tableModel.getValueAt(selectedRow, 0);
         String title = (String) tableModel.getValueAt(selectedRow, 1);
         String author = (String) tableModel.getValueAt(selectedRow, 2);
         int availableCopies = (int) tableModel.getValueAt(selectedRow, 4);
 
-        // Get user's current borrowed count
-        List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(user.getLastName());
-        long currentBorrowedCount = userHistory.stream()
-                .filter(history -> history.getStatus().equals("BORROWED"))
-                .count();
-
-        // Check if user has reached their borrowing limit (3 books)
-        if (currentBorrowedCount >= 3) {
-            JOptionPane.showMessageDialog(this,
-                    "You have reached your maximum limit of 3 borrowed books. Please return some books first.",
-                    "Borrowing Limit Reached",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Check if copies are available
+        // Verify copies are available
         if (availableCopies <= 0) {
             JOptionPane.showMessageDialog(this,
                     "Sorry, this book is currently unavailable.",
@@ -255,50 +238,97 @@ public class UserDashboard extends JFrame {
             return;
         }
 
-//        // Check if user already has a copy of this book
-//        boolean alreadyBorrowed = userHistory.stream()
-//                .anyMatch(history -> history.getBooktitle().equals(title) &&
-//                        history.getLastName().equals(user.getLastName()) &&
-//                        history.getStatus().equals("BORROWED"));
+        try {
+            boolean success = AdminControls.borrowBook(
+                    user.getId(),
+                    title,
+                    user.getLastName(),
+                    author,
+                    1  // Borrowing one copy at a time
+            );
 
-//        if (alreadyBorrowed) {
-//            JOptionPane.showMessageDialog(this,
-//                    "You already have a copy of this book. You can only borrow one copy of each book.",
-//                    "Already Borrowed",
-//                    JOptionPane.WARNING_MESSAGE);
-//            return;
-//        }
+            if (success) {
+                // Immediately refresh the book list to show updated counts
+                loadBooks();
 
-        // Confirm borrow
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Do you want to borrow '" + title + "'?\n" +
-                        "You can borrow " + (3 - currentBorrowedCount) + " more book(s).",
-                "Confirm Borrow",
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.showMessageDialog(this,
+                        "Book borrowed successfully!\nPlease return within 14 days to avoid late fees.",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to borrow book. Please try again.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "An error occurred: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    private void returnBook() {
+        // First, load user's borrowed books
+        List<Borrowed_requests.BorrowRequest> borrowedBooks = BorrowingHistory.LoadHistoryByUser(currentUser.getLastName())
+                .stream()
+                .filter(h -> h.getStatus().equals("BORROWED"))
+                .toList();
 
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (borrowedBooks.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "You don't have any books to return.",
+                    "No Books to Return",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Create a list of book titles for the dropdown
+        String[] bookTitles = borrowedBooks.stream()
+                .map(Borrowed_requests.BorrowRequest::getTitle)
+                .toArray(String[]::new);
+
+        // Show book selection dialog
+        String selectedTitle = (String) JOptionPane.showInputDialog(
+                this,
+                "Select a book to return:",
+                "Return Book",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                bookTitles,
+                bookTitles[0]
+        );
+
+        if (selectedTitle != null) {
             try {
-                // Process the borrow request - always borrow 1 copy
-                boolean success = AdminControls.borrowBook(user.getId(), title, user.getLastName(), author, 1);
+                // Find the full book details from the borrowed list
+                Borrowed_requests.BorrowRequest borrowedBook = borrowedBooks.stream()
+                        .filter(b -> b.getTitle().equals(selectedTitle))
+                        .findFirst()
+                        .orElse(null);
 
-                if (success) {
-                    // Update the table
-                    tableModel.setValueAt(availableCopies - 1, selectedRow, 4);
+                if (borrowedBook != null) {
+                    boolean success = AdminControls.returnBook(
+                            currentUser.getId(),
+                            selectedTitle,
+                            currentUser.getLastName(),
+                            borrowedBook.getAuthor()
+                    );
 
-                    JOptionPane.showMessageDialog(this,
-                            "Book borrowed successfully!\n" +
-                                    "Please return within 14 days to avoid late fees.\n" +
-                                    "You can borrow " + (2 - currentBorrowedCount) + " more book(s).",
-                            "Success",
-                            JOptionPane.INFORMATION_MESSAGE);
+                    if (success) {
+                        // Refresh the book list
+                        loadBooks();
 
-                    // Refresh the book list
-                    loadBooks();
-                } else {
-                    JOptionPane.showMessageDialog(this,
-                            "Failed to borrow book. Please try again.",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this,
+                                "Book returned successfully!",
+                                "Success",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                                "Failed to return book. Please try again.",
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
@@ -308,10 +338,6 @@ public class UserDashboard extends JFrame {
             }
         }
     }
-    private void returnBook() {
-        JOptionPane.showMessageDialog(this, "Return functionality to be implemented");
-    }
-
     private void showProfile() {
         JOptionPane.showMessageDialog(this, "Profile view to be implemented");
     }
