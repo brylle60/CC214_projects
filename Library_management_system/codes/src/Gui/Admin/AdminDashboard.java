@@ -43,7 +43,7 @@ public class AdminDashboard extends JFrame {
 
         // Create buttons panel
         JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setLayout(new GridLayout(4, 1, 0, 20));
+        buttonsPanel.setLayout(new GridLayout(3, 1, 0, 20)); // Changed from 4 to 3 rows
         buttonsPanel.setBounds(20, 100, 250, 400);
         buttonsPanel.setOpaque(false);
 
@@ -51,14 +51,11 @@ public class AdminDashboard extends JFrame {
         JButton bookInventoryBtn = createStyledButton("Book Inventory Management");
         JButton userAccountBtn = createStyledButton("User Account Management");
         JButton reportsBtn = createStyledButton("Reports and Logs");
-        JButton overdueBtn = createStyledButton("Overdue Book Management");
-
 
         // Add buttons to panel
         buttonsPanel.add(bookInventoryBtn);
         buttonsPanel.add(userAccountBtn);
         buttonsPanel.add(reportsBtn);
-        buttonsPanel.add(overdueBtn);
 
         // Add buttons panel to main panel
         mainPanel.add(buttonsPanel);
@@ -70,7 +67,7 @@ public class AdminDashboard extends JFrame {
         contentPanel.setBackground(Color.WHITE);
         mainPanel.add(contentPanel);
 
-//         Add action listeners
+        // Add action listeners
         bookInventoryBtn.addActionListener(e -> {
             contentPanel.removeAll();  // Clear existing content
             BookInventoryDashboard bookDashboard = new BookInventoryDashboard();
@@ -93,11 +90,6 @@ public class AdminDashboard extends JFrame {
             contentPanel.add(reportsDashboard, BorderLayout.CENTER);
             contentPanel.revalidate();
             contentPanel.repaint();
-        });
-
-        overdueBtn.addActionListener(e -> {
-            // Add overdue book management functionality
-            System.out.println("Overdue Book Management clicked");
         });
 
         // Add logout button
@@ -157,8 +149,6 @@ public class AdminDashboard extends JFrame {
 
         return button;
     }
-
-
 
     public static boolean testConnection() {
         try (Connection conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass)) {
