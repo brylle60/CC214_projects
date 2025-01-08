@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.sql.SQLException;
 
 public class AdminControls {
-    private static List<Books> books;
+    private static List<Books> books = new ArrayList<>();  // Initialize the list here
     private static AdminControls instance;
 
     private AdminControls() {
@@ -34,16 +34,12 @@ public class AdminControls {
                 books.clear();  // Clear existing books before loading
                 books.addAll(loadedBooks);
                 sortBooks();
-            } else {
-                books = new ArrayList<>();  // Initialize empty list if load fails
             }
         } catch (Exception e) {
             System.err.println("Error loading books: " + e.getMessage());
             e.printStackTrace();
-            books = new ArrayList<>();  // Initialize empty list if exception occurs
         }
     }
-
 
     public void addBook(Books book) {
         if (book == null) {
@@ -78,79 +74,103 @@ public class AdminControls {
             throw new IllegalArgumentException("Invalid input parameters");
         }
 
-        Optional<Books> bookOpt = books.stream()
-                .filter(b -> b.getTitle().equals(title) && b.isAvailable())
-                .findFirst();
+        try {
+            // First, get current book details from database
+            List<Books> allBooks = MySQLbookDb.LoadBooks();
+            Optional<Books> bookOpt = allBooks.stream()
+                    .filter(b -> b.getTitle().equals(title))
+                    .findFirst();
 
-        if (bookOpt.isPresent()) {
-            Books book = bookOpt.get();
+            if (bookOpt.isPresent()) {
+                Books book = bookOpt.get();
 
-            try {
+                // Verify enough copies are available
+                if (book.getAvailableCopy() < copies) {
+                    return false;
+                }
+
                 // Calculate new available copies
-                int newAvailableCopies = book.getAvailableCopy() - 1;  // Always borrow 1 copy
+                int newAvailableCopies = book.getAvailableCopy() - copies;
 
                 // Update database first
-                System.out.println("Updating book copies - ISBN: " + book.getISBN() + ", New copies: " + newAvailableCopies);
                 MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
 
-                // If database update successful, update book object
-                book.setAvailableCopy(newAvailableCopies);
-
-                // Create borrow record
-                BorrowedHistory borrowedHistory = new BorrowedHistory(
+                // Record the borrow transaction in history
+                BorrowingHistory.BorrowedHistory(
                         userId,
                         lastName,
                         title,
                         author,
-                        1,  // Always borrow 1 copy
+                        copies,
                         "BORROWED"
                 );
 
-                // Record the borrow transaction
-                borrowedHistory.borrowbooks();
-
                 return true;
-            } catch (Exception e) {
-                System.err.println("Error in borrowBook: " + e.getMessage());
-                e.printStackTrace();
+            }
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error in borrowBook: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static void updateBookCopies(int isbn, int newAvailableCopies) {
+        try {
+            if (newAvailableCopies < 0) {
+                throw new IllegalArgumentException("Available copies cannot be negative");
+            }
+            MySQLbookDb.updateBookCopies(isbn, newAvailableCopies);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update book copies: " + e.getMessage());
+        }
+    }
+    public static boolean returnBook(int userId, String title, String userName, String author) {
+        try {
+            // First, verify the book was borrowed
+            List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(userName);
+            boolean hasBorrowed = userHistory.stream()
+                    .anyMatch(h -> h.getTitle().equals(title) &&
+                            h.getStatus().equals("BORROWED"));
+
+            if (!hasBorrowed) {
                 return false;
             }
-        }
-        return false;
-    }
 
-    public boolean returnBook(String title, int userId, String userName, int copies) {
-        Optional<Books> bookOpt = books.stream()
-                .filter(b -> b.getTitle().equals(title))
-                .findFirst();
+            // Get current book details
+            List<Books> allBooks = MySQLbookDb.LoadBooks();
+            Optional<Books> bookOpt = allBooks.stream()
+                    .filter(b -> b.getTitle().equals(title))
+                    .findFirst();
 
-        if (bookOpt.isPresent()) {
-            Books book = bookOpt.get();
+            if (bookOpt.isPresent()) {
+                Books book = bookOpt.get();
 
-            try {
-                // Use the Return class we fixed earlier
-                Return.ReturnResult result =
-                        Return.processReturn(title, userName);
+                // Calculate new available copies
+                int newAvailableCopies = book.getAvailableCopy() + 1;
 
-                if (result.isSuccess()) {
-                    // Update local state
-                    book.setAvailableCopy(book.getAvailableCopy() + copies);
+                // Update database
+                MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
 
-                    // Additional handling for overdue books if needed
-                    if (result.isOverdue()) {
-                        // Could implement overdue fine calculation here
-                        System.out.println("Note: Book was returned overdue");
-                    }
+                // Record the return in history
+                BorrowingHistory.BorrowedHistory(
+                        userId,
+                        userName,
+                        title,
+                        author,
+                        1,  // Returning one copy
+                        "RETURNED"
+                );
 
-                    return true;
-                }
-            } catch (Exception e) {
-                System.err.println("Error processing return: " + e.getMessage());
+                return true;
             }
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error in returnBook: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
-
     public List<Books> getAvailableBooks() {
         return Collections.unmodifiableList(
                 books.stream()
