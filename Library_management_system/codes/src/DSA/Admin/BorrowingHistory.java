@@ -1,29 +1,30 @@
 package DSA.Admin;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BorrowingHistory {
-public static boolean BorrowedHistory(int ID, String userName, String booktitle, String Author, int copies, String Status){
-    try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
-         PreparedStatement register = connection.prepareStatement("INSERT INTO " + DB_Connection.HistoryTable +
-                 "(Id, UserName, BookName, Author, Copies, Status) VALUES(?, ?, ?, ?, ?, ?)"))  {
+    public static boolean BorrowedHistory(int ID, String userName, String booktitle, String Author, int copies, String Status) {
+        try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement register = connection.prepareStatement("INSERT INTO " + DB_Connection.HistoryTable +
+                     "(Id, UserName, BookName, Author, Copies, Status, RequestDate) VALUES(?, ?, ?, ?, ?, ?, ?)")) {
 
-        register.setInt(1, ID);
-        register.setString(2, userName);
-        register.setString(3, booktitle);
-        register.setString(4, Author);
-        register.setInt(5, copies);
-        register.setString(6, Status);
+            register.setInt(1, ID);
+            register.setString(2, userName);
+            register.setString(3, booktitle);
+            register.setString(4, Author);
+            register.setInt(5, copies);
+            register.setString(6, Status);
+            register.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
 
-        register.executeUpdate();
-        return true;
-    } catch (RuntimeException | SQLException e) {
-        throw new RuntimeException(e);
+            register.executeUpdate();
+            return true;
+        } catch (RuntimeException | SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
-}
-//todo make this one works
 
     // Load all borrowing and return history
     public static List<Borrowed_requests.BorrowRequest> LoadAllHistory() {
@@ -36,13 +37,18 @@ public static boolean BorrowedHistory(int ID, String userName, String booktitle,
              ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
+                LocalDateTime requestDate = resultSet.getTimestamp("RequestDate") != null ?
+                        resultSet.getTimestamp("RequestDate").toLocalDateTime() :
+                        LocalDateTime.now();
+
                 Borrowed_requests.BorrowRequest borrowedRequests = new Borrowed_requests.BorrowRequest(
                         resultSet.getInt("Id"),
                         resultSet.getString("UserName"),
                         resultSet.getString("BookName"),
                         resultSet.getString("Author"),
                         resultSet.getInt("Copies"),
-                        resultSet.getString("Status")
+                        resultSet.getString("Status"),
+                        requestDate
                 );
                 historyList.add(borrowedRequests);
             }
@@ -68,13 +74,18 @@ public static boolean BorrowedHistory(int ID, String userName, String booktitle,
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
+                    LocalDateTime requestDate = resultSet.getTimestamp("RequestDate") != null ?
+                            resultSet.getTimestamp("RequestDate").toLocalDateTime() :
+                            LocalDateTime.now();
+
                     Borrowed_requests.BorrowRequest borrowedRequests = new Borrowed_requests.BorrowRequest(
                             resultSet.getInt("Id"),
                             resultSet.getString("UserName"),
                             resultSet.getString("BookName"),
                             resultSet.getString("Author"),
                             resultSet.getInt("Copies"),
-                            resultSet.getString("Status")
+                            resultSet.getString("Status"),
+                            requestDate
                     );
                     userHistory.add(borrowedRequests);
                 }
@@ -101,13 +112,18 @@ public static boolean BorrowedHistory(int ID, String userName, String booktitle,
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
+                    LocalDateTime requestDate = resultSet.getTimestamp("RequestDate") != null ?
+                            resultSet.getTimestamp("RequestDate").toLocalDateTime() :
+                            LocalDateTime.now();
+
                     Borrowed_requests.BorrowRequest borrowedRequests = new Borrowed_requests.BorrowRequest(
                             resultSet.getInt("Id"),
                             resultSet.getString("UserName"),
                             resultSet.getString("BookName"),
                             resultSet.getString("Author"),
                             resultSet.getInt("Copies"),
-                            resultSet.getString("Status")
+                            resultSet.getString("Status"),
+                            requestDate
                     );
                     sortedHistory.add(borrowedRequests);
                 }
@@ -144,4 +160,3 @@ public static boolean BorrowedHistory(int ID, String userName, String booktitle,
         }
     }
 }
-
