@@ -106,7 +106,8 @@ public class LoginPage extends JFrame {
         // Parse and validate ID
         try {
             int id = Integer.parseInt(idText);
-            if (USER_DB.validate(id, password)) {
+            if (USER_DB.validate(id, password
+            )) {
                 // Create a new USER_DB instance to use its methods
                 USER_DB userDb = new USER_DB();
                 // Get the user object
