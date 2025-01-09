@@ -222,7 +222,7 @@ public class ReportsDashboard extends JPanel {
 
         for (BorrowRequest request : historyList) {
             Object[] row = new Object[]{
-                    request.getId(),
+                    request.getUserId(),
                     request.getUser(),
                     request.getTitle(),
                     request.getAuthor(),
@@ -239,7 +239,7 @@ public class ReportsDashboard extends JPanel {
 
         for (BorrowRequest request : requests) {
             Object[] row = new Object[]{
-                    request.getId(),
+                    request.getUserId(),
                     request.getUser(),
                     request.getTitle(),
                     request.getAuthor(),
@@ -271,7 +271,7 @@ public class ReportsDashboard extends JPanel {
 
         for (BorrowRequest request : filteredHistory) {
             Object[] row = new Object[]{
-                    request.getId(),
+                    request.getUserId(),
                     request.getUser(),
                     request.getTitle(),
                     request.getAuthor(),
