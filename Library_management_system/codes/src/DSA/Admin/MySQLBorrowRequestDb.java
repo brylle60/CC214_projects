@@ -1,20 +1,20 @@
 package DSA.Admin;
 
+import DSA.Objects.Books;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 public class MySQLBorrowRequestDb {
 
+    // Add a new borrow request to the database
     public static boolean addRequest(int userId, int bookId, int copies) {
-        String sql = "INSERT INTO " + DB_Connection.RequestTable +
-                " (user_id, book_id, request_date, status, copies) " +
+        String sql = "INSERT INTO borrow_requests (user_id, book_id, request_date, status, copies) " +
                 "VALUES (?, ?, ?, 'PENDING', ?)";
 
-        try (Connection conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+        try (Connection conn = DriverManager.getConnection(
+                DB_Connection.book, DB_Connection.user, DB_Connection.pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, userId);
@@ -24,31 +24,42 @@ public class MySQLBorrowRequestDb {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error adding borrow request: " + e.getMessage());
             return false;
         }
     }
 
+    // Load pending requests from database into queue
     public static Queue<Borrowed_requests.BorrowRequest> loadPendingRequestsIntoQueue() {
         Queue<Borrowed_requests.BorrowRequest> requestQueue = new LinkedList<>();
 
-        String sql = "SELECT r.request_id, u.last_name, b.Title, b.Author, r.copies, " +
-                "r.request_date, r.status FROM " + DB_Connection.RequestTable + " r " +
-                "JOIN users u ON r.user_id = u.id " +
-                "JOIN " + DB_Connection.BookTable + " b ON r.book_id = b.Id " +
+        String sql = "SELECT r.request_id, r.user_id, r.book_id, r.request_date, " +
+                "r.status, r.copies, b.* FROM borrow_requests r " +
+                "JOIN " + DB_Connection.BookTable + " b ON r.book_id = b.ISBN " +
                 "WHERE r.status = 'PENDING' " +
-                "ORDER BY r.request_date ASC";  // Order by date to maintain FIFO
+                "ORDER BY r.request_date ASC";
 
-        try (Connection conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection conn = DriverManager.getConnection(
+                DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                Borrowed_requests.BorrowRequest request = new Borrowed_requests.BorrowRequest(
-                        rs.getInt("request_id"),
-                        rs.getString("last_name"),
+                // Create Books object
+                Books book = new Books(
+                        rs.getInt("ISBN"),
                         rs.getString("Title"),
+                        rs.getString("Genre"),
                         rs.getString("Author"),
+                        rs.getDate("DatePublished"),
+                        rs.getInt("AvailableCopy"),
+                        rs.getInt("TotalCopy")
+                );
+
+                // Create BorrowRequest with the Books object
+                Borrowed_requests.BorrowRequest request = new Borrowed_requests.BorrowRequest(
+                        book,
+                        getUserNameById(rs.getInt("user_id")), // Get username from user_id
                         rs.getInt("copies"),
                         rs.getString("status"),
                         rs.getTimestamp("request_date").toLocalDateTime()
@@ -56,16 +67,17 @@ public class MySQLBorrowRequestDb {
                 requestQueue.offer(request);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error loading pending requests: " + e.getMessage());
         }
         return requestQueue;
     }
 
+    // Update request status
     public static boolean updateRequestStatus(int requestId, String status) {
-        String sql = "UPDATE " + DB_Connection.RequestTable +
-                " SET status = ? WHERE request_id = ?";
+        String sql = "UPDATE borrow_requests SET status = ? WHERE request_id = ?";
 
-        try (Connection conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+        try (Connection conn = DriverManager.getConnection(
+                DB_Connection.book, DB_Connection.user, DB_Connection.pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, status);
@@ -73,9 +85,28 @@ public class MySQLBorrowRequestDb {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error updating request status: " + e.getMessage());
             return false;
         }
     }
 
+    // Helper method to get username by user_id
+    private static String getUserNameById(int userId) {
+        String sql = "SELECT last_name FROM users WHERE id = ?";
+
+        try (Connection conn = DriverManager.getConnection(
+                DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("last_name");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching username: " + e.getMessage());
+        }
+        return "Unknown User";
+    }
 }

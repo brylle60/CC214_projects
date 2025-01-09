@@ -1,6 +1,8 @@
 package DSA.Admin;
 
 import DSA.Objects.Books;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -8,179 +10,161 @@ import java.util.List;
 import java.util.Queue;
 
 public class Borrowed_requests {
-    private static Queue<BorrowRequest> pendingRequests = new LinkedList<>();
+    private static Queue<BorrowRequest> borrowRequests = new LinkedList<>();
     private static List<BorrowRequest> confirmedRequests = new ArrayList<>();
-    private static List<BorrowRequest> rejectedRequests = new ArrayList<>();
 
+    // Class to represent a borrow request
     public static class BorrowRequest {
-        private int id;
+        private Books book;  // Add reference to Books object
+        private int Id;
         private String title;
         private String user;
         private String author;
         private String status;
         private int copies;
-        private LocalDateTime requestDate;
-        private LocalDateTime processedDate;
+        private LocalDateTime borrowReqDate;
 
-        public BorrowRequest(int id, String user, String title, String author,
-                             int copies, String status, LocalDateTime requestDate) {
-            this.id = id;
-            this.title = title;
+        // Updated constructor to take Books object
+        public BorrowRequest(Books book, String user, int copies, String status, LocalDateTime borrowReqDate) {
+            this.book = book;
+            this.Id = book.getISBN();  // Use book's ISBN
+            this.title = book.getTitle();
             this.user = user;
-            this.author = author;
+            this.author = book.getAuthor();
             this.status = status;
             this.copies = copies;
-            this.requestDate = requestDate;
+            this.borrowReqDate = borrowReqDate;
         }
 
-        // Getters and setters
-        public int getId() { return id; }
-        public String getTitle() { return title; }
-        public String getUser() { return user; }
-        public String getAuthor() { return author; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
-        public int getCopies() { return copies; }
-        public LocalDateTime getRequestDate() { return requestDate; }
-        public LocalDateTime getProcessedDate() { return processedDate; }
-        public void setProcessedDate(LocalDateTime date) { this.processedDate = date; }
+        // Getters
+        public Books getBook() {
+            return book;  // Return the Books object
+        }
+
+        public int getBookISBN() {
+            return book.getISBN();  // Return ISBN from Books object
+        }
+
+        public int getId() {
+            return Id;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getUser() {
+            return user;
+        }
+
+        public String getAuthor() {
+            return author;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public int getCopies() {
+            return copies;
+        }
+
+        public LocalDateTime getBorrowReqDate() {
+            return borrowReqDate;
+        }
+
+        public void setBorrowReqDate(LocalDateTime borrowReqDate) {
+            this.borrowReqDate = borrowReqDate;
+        }
     }
 
-    // Initialize/refresh queue from database
-    public static void refreshQueue() {
-        pendingRequests.clear();
-        Queue<BorrowRequest> newRequests = MySQLBorrowRequestDb.loadPendingRequestsIntoQueue();
-        pendingRequests.addAll(newRequests);
-    }
-
-    // Add new borrow request
-    public static boolean addRequest(Books book, String userId) {
-        if (book == null || userId == null || userId.trim().isEmpty()) {
-            return false;
-        }
-
-        if (!book.isAvailable()) {
-            return false;
-        }
-
-        // Create database entry
-        boolean added = MySQLBorrowRequestDb.addRequest(
-                Integer.parseInt(userId),
-                book.getISBN(),
-                1  // Default to 1 copy
-        );
-
-        if (added) {
-            refreshQueue();
-            return true;
+    // Add a borrow request for a book
+    public static boolean addBorrowRequest(Books book, String user) {
+        if (book != null && user != null && !user.trim().isEmpty()) {
+            if (book.isAvailable()) {  // Check availability before adding request
+                int copy = book.getAvailableCopy();
+                BorrowRequest request = new BorrowRequest(book, user, copy, "PENDING", LocalDateTime.now());
+                borrowRequests.offer(request);
+                return true;
+            }
         }
         return false;
     }
 
-    // Process the next request in queue
-    public static BorrowRequest processNextRequest() {
-        return pendingRequests.poll();
-    }
-
     // Confirm a borrow request
-    public static boolean confirmRequest(int requestId) {
-        BorrowRequest request = findRequestById(requestId);
-        if (request == null) {
-            return false;
-        }
-
-        // Update database status
-        if (MySQLBorrowRequestDb.updateRequestStatus(requestId, "CONFIRMED")) {
-            // Remove from pending queue
-            pendingRequests.remove(request);
-
-            // Update request details
+    public static boolean confirmRequest(String bookTitle, String user, int copy) {
+        BorrowRequest request = findPendingRequest(bookTitle, user);
+        if (request != null && request.getBook().isAvailable()) {  // Verify availability
             request.setStatus("CONFIRMED");
-            request.setProcessedDate(LocalDateTime.now());
+            borrowRequests.remove(request);
             confirmedRequests.add(request);
 
-            // Process the actual book borrowing
-            Books book = AdminControls.getInstance().findBookByTitle(request.getTitle());
-            if (book != null) {
-                boolean borrowed = AdminControls.borrowBook(
-                        Integer.parseInt(request.getUser()),
-                        request.getTitle(),
-                        request.getUser(),
-                        request.getAuthor(),
-                        request.getCopies()
-                );
+            Books book = request.getBook();  // Get the Books object
+            book.setBorrowed(true);
+            book.setBorrower(user);
+            book.setAvailableCopy(book.getAvailableCopy() - copy);
 
-                if (borrowed) {
-                    // Add to borrowing history
-                    BorrowingHistory.BorrowedHistory(
-                            Integer.parseInt(request.getUser()),
-                            request.getUser(),
-                            request.getTitle(),
-                            request.getAuthor(),
-                            request.getCopies(),
-                            "BORROWED"
-                    );
-                    return true;
-                }
-            }
+            return true;
         }
         return false;
     }
 
     // Reject a borrow request
-    public static boolean rejectRequest(int requestId) {
-        BorrowRequest request = findRequestById(requestId);
-        if (request == null) {
-            return false;
-        }
-
-        // Update database status
-        if (MySQLBorrowRequestDb.updateRequestStatus(requestId, "REJECTED")) {
-            // Remove from pending queue
-            pendingRequests.remove(request);
-
-            // Update request details
+    public static boolean rejectRequest(String bookTitle, String user) {
+        BorrowRequest request = findPendingRequest(bookTitle, user);
+        if (request != null) {
             request.setStatus("REJECTED");
-            request.setProcessedDate(LocalDateTime.now());
-            rejectedRequests.add(request);
-
+            borrowRequests.remove(request);
             return true;
         }
         return false;
     }
 
-    // Helper method to find request by ID
-    private static BorrowRequest findRequestById(int requestId) {
-        for (BorrowRequest request : pendingRequests) {
-            if (request.getId() == requestId) {
-                return request;
-            }
-        }
-        return null;
+    // Find a pending request by book title and user
+    private static BorrowRequest findPendingRequest(String bookTitle, String user) {
+        return borrowRequests.stream()
+                .filter(req -> req.getTitle().equals(bookTitle) && req.getUser().equals(user))
+                .findFirst()
+                .orElse(null);
     }
 
-    // Get all pending requests
+    // Get a list of all pending requests
     public static List<BorrowRequest> getPendingRequests() {
-        return new ArrayList<>(pendingRequests);
+        return new ArrayList<>(borrowRequests);
     }
 
-    // Get confirmed requests
+    // Get a list of all confirmed requests
     public static List<BorrowRequest> getConfirmedRequests() {
         return new ArrayList<>(confirmedRequests);
     }
 
-    // Get rejected requests
-    public static List<BorrowRequest> getRejectedRequests() {
-        return new ArrayList<>(rejectedRequests);
+    // Process the next request in queue
+    public static BorrowRequest processNextRequest() {
+        return borrowRequests.poll();
     }
 
-    // Get number of pending requests
+    // Get the number of pending requests
     public static int getPendingRequestsCount() {
-        return pendingRequests.size();
+        return borrowRequests.size();
     }
 
     // Check if there are any pending requests
     public static boolean hasPendingRequests() {
-        return !pendingRequests.isEmpty();
+        return !borrowRequests.isEmpty();
+    }
+
+    // View the next request without removing it
+    public static BorrowRequest peekNextRequest() {
+        return borrowRequests.peek();
+    }
+
+    // Clear all requests
+    public static void clearAllRequests() {
+        borrowRequests.clear();
     }
 }
+//this.id
