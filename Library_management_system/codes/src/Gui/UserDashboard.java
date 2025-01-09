@@ -10,15 +10,29 @@ import DSA.Objects.users;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+
 import java.util.List;
+
+import DSA.Admin.USER_DB;
+import DSA.Objects.users;
+
+
 
 public class UserDashboard extends JFrame {
     private JTextField searchField;
     private JComboBox<String> sortByComboBox;
     private JPanel mainPanel;
+
     private JTable bookTable;
     private DefaultTableModel tableModel;
     private final users currentUser;
+
+    private int currentUserId;
+
+    public void setCurrentUser(int userId) {
+        this.currentUserId = userId;
+    }
+
 
     public UserDashboard(users currentUser) {
         this.currentUser = currentUser;
@@ -339,7 +353,140 @@ public class UserDashboard extends JFrame {
         }
     }
     private void showProfile() {
-        JOptionPane.showMessageDialog(this, "Profile view to be implemented");
+        // Verify currentUser is not null
+        if (currentUser == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Error: No user logged in",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JDialog profileDialog = new JDialog(this, "User Profile", true);
+        profileDialog.setSize(400, 300);
+        profileDialog.setLocationRelativeTo(this);
+
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JPanel detailsPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Create fields with current user data
+        JTextField firstNameField = new JTextField(currentUser.getFirstName());
+        JTextField lastNameField = new JTextField(currentUser.getLastName());
+        JTextField userIDField = new JTextField(String.valueOf(currentUser.getId()));
+        JTextField emailField = new JTextField(currentUser.getEmail());
+
+        // Make fields non-editable initially
+        firstNameField.setEditable(false);
+        lastNameField.setEditable(false);
+        userIDField.setEditable(false);
+        emailField.setEditable(false);
+
+        // Add fields with labels
+        addLabelAndField(detailsPanel, "First Name:", firstNameField, gbc);
+        addLabelAndField(detailsPanel, "Last Name:", lastNameField, gbc);
+        addLabelAndField(detailsPanel, "User ID:", userIDField, gbc);
+        addLabelAndField(detailsPanel, "Email:", emailField, gbc);
+
+        // Create button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton editButton = new JButton("Edit Profile");
+        JButton closeButton = new JButton("Close");
+
+        buttonPanel.add(editButton);
+        buttonPanel.add(closeButton);
+
+        // Edit button action
+        editButton.addActionListener(e -> {
+            try {
+                JTextField editFirstNameField = new JTextField(currentUser.getFirstName());
+                JTextField editLastNameField = new JTextField(currentUser.getLastName());
+                JTextField editEmailField = new JTextField(currentUser.getEmail());
+
+                JPanel inputPanel = new JPanel(new GridLayout(6, 2, 5, 5));
+                inputPanel.add(new JLabel("First Name:"));
+                inputPanel.add(editFirstNameField);
+                inputPanel.add(new JLabel("Last Name:"));
+                inputPanel.add(editLastNameField);
+                inputPanel.add(new JLabel("Email:"));
+                inputPanel.add(editEmailField);
+
+                int result = JOptionPane.showConfirmDialog(profileDialog,
+                        inputPanel,
+                        "Edit Profile",
+                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    // Validate input fields
+                    String newFirstName = editFirstNameField.getText().trim();
+                    String newLastName = editLastNameField.getText().trim();
+                    String newEmail = editEmailField.getText().trim();
+
+                    if (newFirstName.isEmpty() || newLastName.isEmpty() || newEmail.isEmpty()) {
+                        throw new IllegalArgumentException("All fields must be filled out");
+                    }
+
+                    // Update the current user object
+                    currentUser.setFirstName(newFirstName);
+                    currentUser.setLastName(newLastName);
+                    currentUser.setEmail(newEmail);
+
+                    // Update in database
+                    if (USER_DB.add(currentUser)) {
+                        // Update display fields
+                        firstNameField.setText(newFirstName);
+                        lastNameField.setText(newLastName);
+                        emailField.setText(newEmail);
+
+                        // Update window title
+                        setTitle("Library Management System - Welcome " +
+                                currentUser.getFirstName() + " " + currentUser.getLastName());
+
+                        JOptionPane.showMessageDialog(profileDialog,
+                                "Profile updated successfully!",
+                                "Success",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        throw new Exception("Failed to update profile in database");
+                    }
+                }
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(profileDialog,
+                        "Invalid input: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(profileDialog,
+                        "Error updating profile: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        closeButton.addActionListener(e -> profileDialog.dispose());
+
+        mainPanel.add(detailsPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        profileDialog.add(mainPanel);
+        profileDialog.setVisible(true);
+    }
+    // Helper method remains the same
+    private void addLabelAndField(JPanel panel, String labelText, JTextField field, GridBagConstraints gbc) {
+        JLabel label = new JLabel(labelText);
+        gbc.anchor = GridBagConstraints.WEST;
+        panel.add(label, gbc);
+
+        field.setPreferredSize(new Dimension(200, 25));
+        gbc.insets = new Insets(0, 5, 15, 5);
+        panel.add(field, gbc);
+
     }
 
     private void showHistory() {
