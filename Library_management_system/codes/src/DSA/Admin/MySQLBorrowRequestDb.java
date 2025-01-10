@@ -9,18 +9,19 @@ import java.util.Queue;
 public class MySQLBorrowRequestDb {
 
     // Add a new borrow request to the database
-    public static boolean addRequest(int userId, int bookId, int copies) {
-        String sql = "INSERT INTO borrow_requests (user_id, book_id, request_date, status, copies) " +
-                "VALUES (?, ?, ?, 'PENDING', ?)";
+    public static boolean addRequest(int userId, int bookId, int copies, String status) {
+        String sql = "INSERT INTO " + DB_Connection.RequestTable + " (user_id, book_id, request_date, status, copies) " +
+                "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(
-                DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+                DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, userId);
             pstmt.setInt(2, bookId);
             pstmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
-            pstmt.setInt(4, copies);
+            pstmt.setString(4, status);  // Set the status parameter
+            pstmt.setInt(5, copies);
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -33,14 +34,14 @@ public class MySQLBorrowRequestDb {
     public static Queue<Borrowed_requests.BorrowRequest> loadPendingRequestsIntoQueue() {
         Queue<Borrowed_requests.BorrowRequest> requestQueue = new LinkedList<>();
 
-        String sql = "SELECT r.request_id, r.user_id, r.book_id, r.request_date, " +
-                "r.status, r.copies, b.* FROM borrow_requests r " +
-                "JOIN " + DB_Connection.BookTable + " b ON r.book_id = b.ISBN " +
+        String sql = "SELECT r.user_id, r.book_id, r.request_date, " +
+                "r.status, r.copies, b.* FROM requestTable r " +
+                "JOIN " + DB_Connection.RequestTable + " b ON r.book_id = b.ISBN " +
                 "WHERE r.status = 'PENDING' " +
                 "ORDER BY r.request_date ASC";
 
         try (Connection conn = DriverManager.getConnection(
-                DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+                DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -73,22 +74,52 @@ public class MySQLBorrowRequestDb {
     }
 
     // Update request status
-    public static boolean updateRequestStatus(int requestId, String status) {
-        String sql = "UPDATE borrow_requests SET status = ? WHERE request_id = ?";
+    public static boolean updateRequestStatus(int requestId, String status, int userId, String bookTitle) {
+        String sql = "UPDATE " + DB_Connection.RequestTable + " SET status = ? WHERE request_id = ?";
+        String historySql = "UPDATE borrowing_history SET status = ? WHERE user_id = ? AND book_title = ? AND status = 'PENDING'";
 
-        try (Connection conn = DriverManager.getConnection(
-                DB_Connection.book, DB_Connection.user, DB_Connection.pass);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+            conn.setAutoCommit(false);  // Start transaction
 
-            pstmt.setString(1, status);
-            pstmt.setInt(2, requestId);
+            // Update request status
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, status);
+                pstmt.setInt(2, requestId);
+                pstmt.executeUpdate();
+            }
 
-            return pstmt.executeUpdate() > 0;
+            // Update history status
+            try (PreparedStatement pstmt = conn.prepareStatement(historySql)) {
+                pstmt.setString(1, status);
+                pstmt.setInt(2, userId);
+                pstmt.setString(3, bookTitle);
+                pstmt.executeUpdate();
+            }
+
+            conn.commit();  // Commit transaction
+            return true;
         } catch (SQLException e) {
+            try {
+                if (conn != null) conn.rollback();  // Rollback on error
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             System.err.println("Error updating request status: " + e.getMessage());
             return false;
+        } finally {
+            try {
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
+
 
     // Helper method to get username by user_id
     private static String getUserNameById(int userId) {

@@ -1,9 +1,6 @@
 package Gui;
 
-import DSA.Admin.AdminControls;
-import DSA.Admin.Borrowed_requests;
-import DSA.Admin.BorrowingHistory;
-import DSA.Admin.MySQLbookDb;
+import DSA.Admin.*;
 import DSA.Objects.Books;
 import DSA.Objects.users;
 
@@ -13,7 +10,6 @@ import java.awt.*;
 
 import java.util.List;
 
-import DSA.Admin.USER_DB;
 import DSA.Objects.users;
 
 
@@ -230,11 +226,13 @@ public class UserDashboard extends JFrame {
         }
     }
 
-    // In UserDashboard.java, update the borrowBook method:
     private void borrowBook(Books book, users user) {
         int selectedRow = bookTable.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a book to borrow.");
+            JOptionPane.showMessageDialog(this,
+                    "Please select a book to request.",
+                    "No Book Selected",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -252,29 +250,72 @@ public class UserDashboard extends JFrame {
             return;
         }
 
+        // Ask user how many copies they want to request
+        String copiesInput = JOptionPane.showInputDialog(this,
+                "How many copies would you like to request? (Maximum: " + availableCopies + ")",
+                "Request Copies",
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (copiesInput == null) {
+            return; // User cancelled
+        }
+
         try {
-            boolean success = AdminControls.borrowBook(
-                    user.getId(),
-                    title,
-                    user.getLastName(),
-                    author,
-                    1  // Borrowing one copy at a time
+            int requestedCopies = Integer.parseInt(copiesInput);
+
+            if (requestedCopies <= 0) {
+                throw new IllegalArgumentException("Please enter a positive number of copies.");
+            }
+
+            if (requestedCopies > availableCopies) {
+                throw new IllegalArgumentException("Cannot request more copies than available.");
+            }
+
+            // Submit borrow request to database with PENDING status
+            boolean requestSuccess = MySQLBorrowRequestDb.addRequest(
+                    currentUser.getId(),
+                    isbn,
+                    requestedCopies,
+                    "PENDING"  // Add the status parameter
             );
 
-            if (success) {
-                // Immediately refresh the book list to show updated counts
-                loadBooks();
+            if (requestSuccess) {
+                // Record the request in borrowing history with PENDING status
+                boolean historySuccess = BorrowingHistory.BorrowedHistory(
+                        currentUser.getId(),
+                        currentUser.getLastName(),
+                        title,
+                        author,
+                        requestedCopies,
+                        "PENDING"
+                );
 
-                JOptionPane.showMessageDialog(this,
-                        "Book borrowed successfully!\nPlease return within 14 days to avoid late fees.",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                if (historySuccess) {
+                    JOptionPane.showMessageDialog(this,
+                            "Your borrow request has been submitted successfully!\n" +
+                                    "Please wait for admin approval.",
+                            "Request Submitted",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    // Refresh the book list to show updated availability
+                    loadBooks();
+                } else {
+                    throw new Exception("Failed to record request in history.");
+                }
             } else {
-                JOptionPane.showMessageDialog(this,
-                        "Failed to borrow book. Please try again.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                throw new Exception("Failed to submit borrow request.");
             }
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid number.",
+                    "Invalid Input",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this,
+                    e.getMessage(),
+                    "Invalid Request",
+                    JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "An error occurred: " + e.getMessage(),
@@ -282,6 +323,7 @@ public class UserDashboard extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+
     private void returnBook() {
         // First, load user's borrowed books
         List<Borrowed_requests.BorrowRequest> borrowedBooks = BorrowingHistory.LoadHistoryByUser(currentUser.getLastName())

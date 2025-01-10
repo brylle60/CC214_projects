@@ -169,31 +169,30 @@ public class BorrowingHistory {
         }
     }
 
-    // Fetch Book object by ISBN (or ID)
     public static Books fetchBookByISBN(int isbn) {
-        String query = "SELECT * FROM " + DB_Connection.BookTable + " WHERE ISBN = ?";
+        String query = "SELECT * FROM " + DB_Connection.BookTable + " WHERE Id = ?";
 
-        try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
+        try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
              PreparedStatement statement = connection.prepareStatement(query)) {
 
             statement.setInt(1, isbn);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    Date publishedDate = resultSet.getDate("DatePublished");
-                    // Check if DatePublished is null
+                    Date publishedDate = resultSet.getDate("Publish_date");
+                    // Check if Publish_date is null
                     if (publishedDate == null) {
                         publishedDate = Date.valueOf("1900-01-01"); // Or some default value
                     }
 
                     return new Books(
-                            resultSet.getInt("ISBN"),
+                            resultSet.getInt("Id"),         // Changed from "ISBN" to "Id"
                             resultSet.getString("Title"),
                             resultSet.getString("Genre"),
                             resultSet.getString("Author"),
                             publishedDate,
-                            resultSet.getInt("AvailableCopy"),
-                            resultSet.getInt("TotalCopy")
+                            resultSet.getInt("Copies"),     // Changed from "AvailableCopy" to "Copies"
+                            resultSet.getInt("Total_copies") // Changed from "TotalCopy" to "Total_copies"
                     );
                 }
             }

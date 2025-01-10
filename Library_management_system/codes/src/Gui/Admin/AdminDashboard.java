@@ -166,7 +166,8 @@ public class AdminDashboard extends JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            new AdminDashboard().setVisible(true);
+//            new AdminDashboard().setVisible(true);
+            new ReportsDashboard().setVisible(true);
         });
     }
 }
