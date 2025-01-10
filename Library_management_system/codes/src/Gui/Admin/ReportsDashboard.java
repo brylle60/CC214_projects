@@ -3,6 +3,7 @@ package Gui.Admin;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import DSA.Admin.BorrowingHistory;
 import DSA.Admin.Borrowed_requests;
@@ -14,8 +15,8 @@ public class ReportsDashboard extends JPanel {
     private final DefaultTableModel borrowHistoryModel;
     private final JTable activityLogsTable;
     private final DefaultTableModel activityLogsModel;
-    private final JTable requestsTable;
-    private final DefaultTableModel requestsModel;
+    private JTable requestsTable;
+    private DefaultTableModel requestsModel;
     private final JComboBox<String> statusFilter;
     private static final Color DARK_GREEN = new Color(40, 54, 44);
     private static final Color BUTTON_COLOR = new Color(184, 207, 229);
@@ -107,44 +108,149 @@ public class ReportsDashboard extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(Color.WHITE);
 
+        // Create table model with columns
+        String[] columns = {
+                "Request ID", "User", "Book Title", "Author", "Copies", "Request Date", "Status"
+        };
+        requestsModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        // Create and configure the table
+        requestsTable = new JTable(requestsModel);
+        configureTable(requestsTable);
+
+        // Add table to a scroll pane
+        JScrollPane scrollPane = new JScrollPane(requestsTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
         // Create button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);
 
+        // In your createBookRequestsPanel method
         JButton acceptButton = createStyledButton("Accept Request");
         JButton declineButton = createStyledButton("Decline Request");
-        JButton refreshRequestsButton = createStyledButton("↻ Refresh");
 
-        buttonPanel.add(acceptButton);
-        buttonPanel.add(declineButton);
-        buttonPanel.add(refreshRequestsButton);
+// Use lambda to ensure proper method reference
+        acceptButton.addActionListener(e -> handleRequestAction(true));
+        declineButton.addActionListener(e -> handleRequestAction(false));
+        JButton refreshRequestsButton = createStyledButton("↻ Refresh");
 
         // Add action listeners
         acceptButton.addActionListener(e -> handleRequestAction(true));
         declineButton.addActionListener(e -> handleRequestAction(false));
         refreshRequestsButton.addActionListener(e -> refreshRequests());
 
-        panel.add(new JScrollPane(requestsTable), BorderLayout.CENTER);
+        buttonPanel.add(acceptButton);
+        buttonPanel.add(declineButton);
+        buttonPanel.add(refreshRequestsButton);
+
+        // Add components to main panel
+        panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Initial load of requests
+        refreshRequests();
 
         return panel;
     }
 
     private void configureTable(JTable table) {
+        // Existing code
+        table.setRowHeight(30);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setRowHeight(25);
-        table.getTableHeader().setBackground(DARK_GREEN);
-        table.getTableHeader().setForeground(Color.BLACK);
-        table.setGridColor(Color.LIGHT_GRAY);
-        table.setFont(new Font("Serif", Font.PLAIN, 14));
+        table.setRowSelectionAllowed(true); // Add this line
 
+        // Add selection listener
+        table.getSelectionModel().addListSelectionListener(e -> {
+            // Debug print when selection changes
+            if (!e.getValueIsAdjusting()) {
+                System.out.println("Selection changed - Selected row: " + table.getSelectedRow());
+            }
+        });
+
+        // Configure header
+        JTableHeader header = table.getTableHeader();
+        header.setBackground(DARK_GREEN);
+        header.setForeground(Color.WHITE);
+        header.setFont(new Font("Serif", Font.BOLD, 14));
+
+        // Configure cells
+        table.setFont(new Font("Serif", Font.PLAIN, 14));
+        table.setGridColor(Color.LIGHT_GRAY);
+        table.setShowGrid(true);
+
+        // Rest of your existing code for column widths and renderers...
+        TableColumnModel columnModel = table.getColumnModel();
+        int[] columnWidths;
+
+        if (table == borrowHistoryTable) {
+            columnWidths = new int[]{80, 100, 200, 150, 80, 100};
+        } else if (table == requestsTable) {
+            columnWidths = new int[]{80, 100, 200, 150, 80, 150, 100};
+        } else if (table == activityLogsTable) {
+            columnWidths = new int[]{150, 100, 100, 250};
+        } else {
+            return;
+        }
+
+        // Apply column widths
+        for (int i = 0; i < Math.min(columnWidths.length, columnModel.getColumnCount()); i++) {
+            columnModel.getColumn(i).setPreferredWidth(columnWidths[i]);
+        }
+
+        // Center align certain columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+
+        if (table == borrowHistoryTable || table == requestsTable) {
+            table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+            table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
+            table.getColumnModel().getColumn(table.getColumnCount() - 1).setCellRenderer(centerRenderer);
+        } else if (table == activityLogsTable) {
+            table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+            table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
         }
     }
+    // Update the refresh method to properly populate the table
+    private void refreshRequests() {
+        requestsModel.setRowCount(0); // Clear existing rows
 
+        // Initialize requests from database
+        Borrowed_requests.initializeFromDatabase();
+
+        // Get pending requests
+        List<BorrowRequest> requests = Borrowed_requests.getPendingRequests();
+
+        if (requests.isEmpty()) {
+            // Add a "No requests" row
+            requestsModel.addRow(new Object[]{"--", "--", "No pending requests", "--", "--", "--", "--"});
+        } else {
+            for (BorrowRequest request : requests) {
+                // Format the date nicely
+                String formattedDate = request.getBorrowReqDate().format(
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                );
+
+                Object[] row = new Object[]{
+                        request.getId(),
+                        request.getUser(),
+                        request.getTitle(),
+                        request.getAuthor(),
+                        request.getCopies(),
+                        formattedDate,
+                        request.getStatus()
+                };
+                requestsModel.addRow(row);
+            }
+        }
+
+        requestsTable.repaint();
+    }
     private JButton createStyledButton(String text) {
         JButton button = new JButton(text);
         button.setBackground(BUTTON_COLOR);
@@ -160,7 +266,17 @@ public class ReportsDashboard extends JPanel {
     }
 
     private void handleRequestAction(boolean isAccept) {
+        // Get the VIEWED index (what user sees in the table)
         int selectedRow = requestsTable.getSelectedRow();
+
+        // Debug prints
+        System.out.println("Selected row index: " + selectedRow);
+        System.out.println("Is anything selected? " + (selectedRow != -1));
+
+        // If using a sorted/filtered table, convert to model index
+        int modelRow = requestsTable.convertRowIndexToModel(selectedRow);
+        System.out.println("Converted model row: " + modelRow);
+
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,
                     "Please select a request first",
@@ -169,42 +285,48 @@ public class ReportsDashboard extends JPanel {
             return;
         }
 
-        int requestId = (int) requestsTable.getValueAt(selectedRow, 0);
-        String bookTitle = (String) requestsTable.getValueAt(selectedRow, 2);
-        String user = (String) requestsTable.getValueAt(selectedRow, 1);
+        try {
+            // Get values using model row index to avoid sorting/filtering issues
+            Object requestIdObj = requestsTable.getModel().getValueAt(modelRow, 0);
+            String user = (String) requestsTable.getModel().getValueAt(modelRow, 1);
+            String bookTitle = (String) requestsTable.getModel().getValueAt(modelRow, 2);
 
-        boolean success;
-        if (isAccept) {
-            success = Borrowed_requests.confirmRequest( bookTitle, user,requestId);
+            System.out.println("Selected Request - ID: " + requestIdObj + ", User: " + user + ", Book: " + bookTitle);
+
+            int requestId = Integer.parseInt(requestIdObj.toString());
+
+            boolean success;
+            if (isAccept) {
+                success = Borrowed_requests.confirmRequest(bookTitle, user, requestId);
+            } else {
+                success = Borrowed_requests.rejectRequest(bookTitle, user);
+            }
+
             if (success) {
+                refreshRequests();
+                String action = isAccept ? "accepted" : "rejected";
+                JOptionPane.showMessageDialog(this,
+                        "Request " + action + " successfully",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // Add activity log
                 addActivityLog(
                         LocalDateTime.now().toString(),
                         "Admin",
-                        "Accept Request",
-                        "Accepted book request: " + bookTitle + " for user: " + user
+                        isAccept ? "Accept Request" : "Reject Request",
+                        (isAccept ? "Accepted" : "Rejected") + " book request: " + bookTitle + " for user: " + user
                 );
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to " + (isAccept ? "accept" : "reject") + " request",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
-        } else {
-            success = Borrowed_requests.rejectRequest(bookTitle, user);
-            if (success) {
-                addActivityLog(
-                        LocalDateTime.now().toString(),
-                        "Admin",
-                        "Reject Request",
-                        "Rejected book request: " + bookTitle + " for user: " + user
-                );
-            }
-        }
-
-        if (success) {
-            refreshRequests();
+        } catch (Exception e) {
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                    "Request " + (isAccept ? "accepted" : "rejected") + " successfully",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            JOptionPane.showMessageDialog(this,
-                    "Failed to " + (isAccept ? "accept" : "reject") + " request",
+                    "Error processing request: " + e.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
@@ -216,9 +338,12 @@ public class ReportsDashboard extends JPanel {
         refreshRequests();
     }
 
+    // In ReportsDashboard.java
     private void refreshBorrowingHistory() {
         borrowHistoryModel.setRowCount(0);
         List<BorrowRequest> historyList = BorrowingHistory.LoadAllHistory();
+
+        System.out.println("Loaded " + historyList.size() + " history records");
 
         for (BorrowRequest request : historyList) {
             Object[] row = new Object[]{
@@ -231,30 +356,48 @@ public class ReportsDashboard extends JPanel {
             };
             borrowHistoryModel.addRow(row);
         }
+        System.out.println("Added " + borrowHistoryModel.getRowCount() + " rows to table");
     }
-
-    private void refreshRequests() {
-        requestsModel.setRowCount(0);
-
-        // Initialize requests from database first
-        Borrowed_requests.initializeFromDatabase();
-
-        // Then get the requests
-        List<Borrowed_requests.BorrowRequest> requests = Borrowed_requests.getPendingRequests();
-
-        for (BorrowRequest request : requests) {
-            Object[] row = new Object[]{
-                    request.getId(),
-                    request.getUser(),
-                    request.getTitle(),
-                    request.getAuthor(),
-                    request.getCopies(),
-                    request.getBorrowReqDate(),
-                    request.getStatus()
-            };
-            requestsModel.addRow(row);
-        }
-    }
+//
+//    private void refreshRequests() {
+//        requestsModel.setRowCount(0);
+//        System.out.println("Cleared request table rows");
+//
+//        // Initialize requests from database
+//        Borrowed_requests.initializeFromDatabase();
+//        System.out.println("Initialized requests from database");
+//
+//        // Get pending requests
+//        List<Borrowed_requests.BorrowRequest> requests = Borrowed_requests.getPendingRequests();
+//        System.out.println("Retrieved " + requests.size() + " pending requests");
+//
+//        if (requests.isEmpty()) {
+//            System.out.println("No pending requests found");
+//            // Maybe add a "No requests" message to the table
+//            requestsModel.addRow(new Object[]{"No pending requests", "", "", "", "", "", ""});
+//            return;
+//        }
+//
+//        for (BorrowRequest request : requests) {
+//            try {
+//                Object[] row = new Object[]{
+//                        request.getId(),
+//                        request.getUser(),
+//                        request.getTitle(),
+//                        request.getAuthor(),
+//                        request.getCopies(),
+//                        request.getBorrowReqDate(),
+//                        request.getStatus()
+//                };
+//                requestsModel.addRow(row);
+//                System.out.println("Added request: " + request.getTitle() + " by " + request.getUser());
+//            } catch (Exception e) {
+//                System.err.println("Error adding row for request: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//        }
+//        System.out.println("Final table row count: " + requestsModel.getRowCount());
+//    }
 
     private void refreshActivityLogs() {
         activityLogsModel.setRowCount(0);
