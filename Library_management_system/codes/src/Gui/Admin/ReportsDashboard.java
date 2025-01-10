@@ -33,8 +33,16 @@ public class ReportsDashboard extends JPanel {
     public ReportsDashboard() {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+// Add this near the start of your constructor, after setLayout and setBorder
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topPanel.setBackground(Color.WHITE);
+        JButton backButton = createStyledButton("← Back");
+        backButton.addActionListener(e -> navigateBack());
+        topPanel.add(backButton);
 
+// Add the top panel to the main panel (before adding the tabbedPane)
+        add(topPanel, BorderLayout.NORTH);
         // Create tabbed pane for different views
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Serif", Font.PLAIN, 14));
@@ -261,8 +269,6 @@ public class ReportsDashboard extends JPanel {
             return new int[]{80, 100, 200, 150, 80, 100};
         } else if (table == requestsTable) {
             return new int[]{80, 100, 200, 150, 80, 150, 100};
-        } else if (table == activityLogsTable) {
-            return new int[]{150, 100, 100, 250};
         }
         return new int[]{};
     }
@@ -342,12 +348,12 @@ public class ReportsDashboard extends JPanel {
                         "Success",
                         JOptionPane.INFORMATION_MESSAGE);
 
-                addActivityLog(
-                        LocalDateTime.now().toString(),
-                        "Admin",
-                        isAccept ? "Accept Request" : "Reject Request",
-                        (isAccept ? "Accepted" : "Rejected") + " book request: " + bookTitle + " for user: " + user
-                );
+//                addActivityLog(
+//                        LocalDateTime.now().toString(),
+//                        "Admin",
+//                        isAccept ? "Accept Request" : "Reject Request",
+//                        (isAccept ? "Accepted" : "Rejected") + " book request: " + bookTitle + " for user: " + user
+//                );
             } else {
                 JOptionPane.showMessageDialog(this,
                         "Failed to " + (isAccept ? "accept" : "reject") + " request. " +
@@ -401,12 +407,12 @@ public class ReportsDashboard extends JPanel {
                         "Success",
                         JOptionPane.INFORMATION_MESSAGE);
 
-                addActivityLog(
-                        LocalDateTime.now().toString(),
-                        userName,
-                        "Return Book",
-                        "Returned book: " + bookTitle
-                );
+//                addActivityLog(
+//                        LocalDateTime.now().toString(),
+//                        userName,
+//                        "Return Book",
+//                        "Returned book: " + bookTitle
+//                );
 
                 refreshData();
             } else {
@@ -466,8 +472,8 @@ public class ReportsDashboard extends JPanel {
             // Modified query to include proper column names and table joins
             String query = "SELECT r.user_id as request_id, u.lastName, b.Title, b.Author, " +
                     "r.copies, r.request_date, r.status " +
-                    "FROM requestTable r " +
-                    "JOIN Books.AddedBooks b ON r.book_id = b.Id " +
+                    "FROM borrow_requests r " +
+                    "JOIN books.addedBooks b ON r.book_id = b.Id " +
                     "JOIN user.users u ON r.user_id = u.id " +
                     "WHERE r.status = 'PENDING' " +
                     "ORDER BY r.request_date ASC";
@@ -612,11 +618,24 @@ public class ReportsDashboard extends JPanel {
             borrowHistoryModel.addRow(row);
         }
     }
+    private void navigateBack() {
+        // Get the parent window
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof JFrame) {
+            window.dispose();
+            // Create and show admin dashboard
+            JFrame adminFrame = new JFrame("Admin Dashboard");
+            adminFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            AdminDashboard adminDashboard = new AdminDashboard();
 
-    public void addActivityLog(String time, String user, String action, String details) {
-        Object[] row = new Object[]{time, user, action, details};
-        activityLogsModel.addRow(row);
+            adminDashboard.setVisible(true);
+        }
     }
+
+//    public void addActivityLog(String time, String user, String action, String details) {
+//        Object[] row = new Object[]{time, user, action, details};
+//        activityLogsModel.addRow(row);
+//    }
     public static void main(String[] args) {
         // Run GUI code on Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
@@ -634,4 +653,5 @@ public class ReportsDashboard extends JPanel {
             frame.setVisible(true);
         });
     }
+
 }
