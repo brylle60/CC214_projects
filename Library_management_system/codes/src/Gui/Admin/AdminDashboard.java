@@ -85,8 +85,8 @@ public class AdminDashboard extends JFrame {
 
         reportsBtn.addActionListener(e -> {
             contentPanel.removeAll();  // Clear existing content
-//            ReportsDashboard reportsDashboard = new ReportsDashboard();
-//            contentPanel.add(reportsDashboard, BorderLayout.CENTER);
+            ReportsDashboard reportsDashboard = new ReportsDashboard();
+            contentPanel.add(reportsDashboard, BorderLayout.CENTER);
             contentPanel.revalidate();
             contentPanel.repaint();
         });
