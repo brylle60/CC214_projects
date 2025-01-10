@@ -170,12 +170,12 @@ public class ReportsDashboard extends JPanel {
         }
 
         int requestId = (int) requestsTable.getValueAt(selectedRow, 0);
-        String bookTitle = (String) requestsTable.getValueAt(selectedRow, 2);
         String user = (String) requestsTable.getValueAt(selectedRow, 1);
-
+        String bookTitle = (String) requestsTable.getValueAt(selectedRow, 2);
+        int copy = (int) requestsTable.getValueAt(selectedRow, 3);
         boolean success;
         if (isAccept) {
-            success = Borrowed_requests.confirmRequest(requestId);
+            success = Borrowed_requests.confirmRequest(bookTitle, user, copy);
             if (success) {
                 addActivityLog(
                         LocalDateTime.now().toString(),
@@ -185,7 +185,7 @@ public class ReportsDashboard extends JPanel {
                 );
             }
         } else {
-            success = Borrowed_requests.rejectRequest(requestId);
+            success = Borrowed_requests.rejectRequest(bookTitle,user);
             if (success) {
                 addActivityLog(
                         LocalDateTime.now().toString(),
@@ -209,7 +209,6 @@ public class ReportsDashboard extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-
     private void refreshData() {
         refreshBorrowingHistory();
         refreshActivityLogs();
@@ -222,7 +221,7 @@ public class ReportsDashboard extends JPanel {
 
         for (BorrowRequest request : historyList) {
             Object[] row = new Object[]{
-                    request.getUserId(),
+                    request.getId(),
                     request.getUser(),
                     request.getTitle(),
                     request.getAuthor(),
@@ -239,12 +238,12 @@ public class ReportsDashboard extends JPanel {
 
         for (BorrowRequest request : requests) {
             Object[] row = new Object[]{
-                    request.getUserId(),
+                    request.getId(),
                     request.getUser(),
                     request.getTitle(),
                     request.getAuthor(),
                     request.getCopies(),
-                    request.getRequestDate(),
+                    request.getBorrowReqDate(),
                     request.getStatus()
             };
             requestsModel.addRow(row);
@@ -271,7 +270,7 @@ public class ReportsDashboard extends JPanel {
 
         for (BorrowRequest request : filteredHistory) {
             Object[] row = new Object[]{
-                    request.getUserId(),
+                    request.getId(),
                     request.getUser(),
                     request.getTitle(),
                     request.getAuthor(),

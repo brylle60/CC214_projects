@@ -171,19 +171,19 @@ public class BorrowingHistory {
 
     // Fetch Book object by ISBN (or ID)
     public static Books fetchBookByISBN(int isbn) {
-        String query = "SELECT * FROM " + DB_Connection.BookTable + " WHERE ISBN = ?";
+        // Change connection to books database instead of borrowing_history
+        String query = "SELECT * FROM addedbooks WHERE ISBN = ?";  // Use the correct table name
 
-        try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
-             PreparedStatement statement = connection.prepareStatement(query)) {
-
+        try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass)) {
+            // Rest of the code remains the same
+            PreparedStatement statement = connection.prepareStatement(query);
             statement.setInt(1, isbn);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     Date publishedDate = resultSet.getDate("DatePublished");
-                    // Check if DatePublished is null
                     if (publishedDate == null) {
-                        publishedDate = Date.valueOf("1900-01-01"); // Or some default value
+                        publishedDate = Date.valueOf("1900-01-01");
                     }
 
                     return new Books(
@@ -197,11 +197,10 @@ public class BorrowingHistory {
                     );
                 }
             }
-
         } catch (SQLException e) {
             System.err.println("Error fetching book: " + e.getMessage());
             throw new RuntimeException("Failed to fetch book", e);
         }
-        return null;  // Return null if no book found
+        return null;
     }
 }
