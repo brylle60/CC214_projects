@@ -37,8 +37,8 @@ public class MySQLBorrowRequestDb {
         Queue<Borrowed_requests.BorrowRequest> requestQueue = new LinkedList<>();
 
         String sql = "SELECT r.user_id, r.book_id, r.request_date, " +
-                "r.status, r.copies, b.* FROM requestTable r " +
-                "JOIN " + DB_Connection.RequestTable + " b ON r.book_id = b.ISBN " +
+                "r.status, r.copies, b.* FROM " + DB_Connection.RequestTable + " r " +
+                "JOIN  books.addedbooks b ON r.book_id = b.ISBN " +
                 "WHERE r.status = 'PENDING' " +
                 "ORDER BY r.request_date ASC";
 
