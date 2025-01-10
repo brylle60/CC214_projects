@@ -355,7 +355,7 @@ public class UserDashboard extends JFrame {
                 bookTitles[0]
         );
 
-        if (selectedTitle != null) {
+        if (selectedTitle != null && !selectedTitle.trim().isEmpty()) {
             try {
                 // Find the full book details from the borrowed list
                 Borrowed_requests.BorrowRequest borrowedBook = borrowedBooks.stream()
@@ -364,6 +364,7 @@ public class UserDashboard extends JFrame {
                         .orElse(null);
 
                 if (borrowedBook != null) {
+                    // Call the returnBook method in AdminControls
                     boolean success = AdminControls.returnBook(
                             currentUser.getId(),
                             selectedTitle,
@@ -385,15 +386,29 @@ public class UserDashboard extends JFrame {
                                 "Error",
                                 JOptionPane.ERROR_MESSAGE);
                     }
+                } else {
+                    // If borrowedBook is null, this shouldn't happen, but if it does, show an error
+                    JOptionPane.showMessageDialog(this,
+                            "An error occurred. Please try again later.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception e) {
+                // Display the error message
                 JOptionPane.showMessageDialog(this,
                         "An error occurred: " + e.getMessage(),
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
             }
+        } else {
+            // If selectedTitle is null or empty, no book was selected
+            JOptionPane.showMessageDialog(this,
+                    "No book selected. Operation cancelled.",
+                    "Cancelled",
+                    JOptionPane.INFORMATION_MESSAGE);
         }
     }
+
     private void showProfile() {
         // Verify currentUser is not null
         if (currentUser == null) {
