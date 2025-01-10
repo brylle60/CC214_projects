@@ -4,13 +4,13 @@ import DSA.Objects.Books;
 import DSA.Objects.BorrowedHistory;
 import DSA.UserControl.Return;
 
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.sql.SQLException;
 
 public class AdminControls {
     private static List<Books> books = new ArrayList<>();  // Initialize the list here
@@ -125,52 +125,62 @@ public class AdminControls {
             throw new RuntimeException("Failed to update book copies: " + e.getMessage());
         }
     }
-    public static boolean returnBook(int userId, String title, String userName, String author) {
-        try {
-            // First, verify the book was borrowed
-            List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(userName);
-            boolean hasBorrowed = userHistory.stream()
-                    .anyMatch(h -> h.getTitle().equals(title) &&
-                            h.getStatus().equals("BORROWED"));
+    public static boolean returnBook(int userId, String bookTitle, String userName, String author) {
+        // Check if the book is already returned or not borrowed
+        if (!checkIfBookIsBorrowed(userId, bookTitle)) {
+            System.out.println("This book has already been returned or was never borrowed.");
+            return false;  // Book cannot be returned
+        }
 
-            if (!hasBorrowed) {
-                return false;
+        // Update the status of the borrowed book to "RETURNED"
+        String query = "UPDATE " + DB_Connection.HistoryTable +
+                " SET Status = 'RETURNED' WHERE Id = ? AND BookName = ? AND Status = 'BORROWED'";
+
+        try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, userId);
+            statement.setString(2, bookTitle);
+
+            int rowsUpdated = statement.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("Book returned successfully.");
+                return true;  // Book has been marked as returned
+            } else {
+                System.out.println("Failed to return the book. It may have already been returned.");
+                return false;  // If no rows were updated, return false
             }
 
-            // Get current book details
-            List<Books> allBooks = MySQLbookDb.LoadBooks();
-            Optional<Books> bookOpt = allBooks.stream()
-                    .filter(b -> b.getTitle().equals(title))
-                    .findFirst();
-
-            if (bookOpt.isPresent()) {
-                Books book = bookOpt.get();
-
-                // Calculate new available copies
-                int newAvailableCopies = book.getAvailableCopy() + 1;
-
-                // Update database
-                MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
-
-                // Record the return in history
-                BorrowingHistory.BorrowedHistory(
-                        userId,
-                        userName,
-                        title,
-                        author,
-                        1,  // Returning one copy
-                        "RETURNED"
-                );
-
-                return true;
-            }
-            return false;
-        } catch (Exception e) {
-            System.err.println("Error in returnBook: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+        } catch (SQLException e) {
+            System.err.println("Error while updating borrow history: " + e.getMessage());
+            return false;  // Handle database errors gracefully
         }
     }
+
+    public static boolean checkIfBookIsBorrowed(int userId, String bookTitle) {
+        String query = "SELECT COUNT(*) FROM " + DB_Connection.HistoryTable +
+                " WHERE Id = ? AND BookName = ? AND Status = 'BORROWED'";
+
+        try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
+             PreparedStatement stmt = connection.prepareStatement(query)) {
+
+            stmt.setInt(1, userId);
+            stmt.setString(2, bookTitle);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+            return false;
+
+        } catch (SQLException e) {
+            System.err.println("Error checking borrow status: " + e.getMessage());
+            return false;  // Handle database errors gracefully
+        }
+    }
+
     public List<Books> getAvailableBooks() {
         return Collections.unmodifiableList(
                 books.stream()
