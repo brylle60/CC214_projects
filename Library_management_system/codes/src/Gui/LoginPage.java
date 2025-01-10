@@ -248,3 +248,4 @@ public class LoginPage extends JFrame {
         SwingUtilities.invokeLater(() -> new LoginPage().setVisible(true));
     }
 }
+
