@@ -96,7 +96,7 @@ public class Borrowed_requests {
     }
 
     // Confirm a borrow request
-    public static boolean confirmRequest(String bookTitle, String user, int copy) {
+    public static boolean confirmRequest(String bookTitle, String user, int id) {
         BorrowRequest request = findPendingRequest(bookTitle, user);
         if (request != null && request.getBook().isAvailable()) {  // Verify availability
             request.setStatus("CONFIRMED");
@@ -106,7 +106,8 @@ public class Borrowed_requests {
             Books book = request.getBook();  // Get the Books object
             book.setBorrowed(true);
             book.setBorrower(user);
-            book.setAvailableCopy(book.getAvailableCopy() - copy);
+
+
 
             return true;
         }
@@ -131,7 +132,9 @@ public class Borrowed_requests {
                 .findFirst()
                 .orElse(null);
     }
-
+    public static void initializeFromDatabase() {
+        borrowRequests = new LinkedList<>(MySQLBorrowRequestDb.loadPendingRequestsIntoQueue());
+    }
     // Get a list of all pending requests
     public static List<BorrowRequest> getPendingRequests() {
         return new ArrayList<>(borrowRequests);

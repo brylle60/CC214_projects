@@ -1,9 +1,6 @@
 package Gui;
 
-import DSA.Admin.AdminControls;
-import DSA.Admin.Borrowed_requests;
-import DSA.Admin.BorrowingHistory;
-import DSA.Admin.MySQLbookDb;
+import DSA.Admin.*;
 import DSA.Objects.Books;
 import DSA.Objects.users;
 
@@ -13,7 +10,6 @@ import java.awt.*;
 
 import java.util.List;
 
-import DSA.Admin.USER_DB;
 import DSA.Objects.users;
 
 
@@ -230,11 +226,13 @@ public class UserDashboard extends JFrame {
         }
     }
 
-    // In UserDashboard.java, update the borrowBook method:
     private void borrowBook(Books book, users user) {
         int selectedRow = bookTable.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a book to borrow.");
+            JOptionPane.showMessageDialog(this,
+                    "Please select a book to request.",
+                    "No Book Selected",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -252,29 +250,72 @@ public class UserDashboard extends JFrame {
             return;
         }
 
+        // Ask user how many copies they want to request
+        String copiesInput = JOptionPane.showInputDialog(this,
+                "How many copies would you like to request? (Maximum: " + availableCopies + ")",
+                "Request Copies",
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (copiesInput == null) {
+            return; // User cancelled
+        }
+
         try {
-            boolean success = AdminControls.borrowBook(
-                    user.getId(),
-                    title,
-                    user.getLastName(),
-                    author,
-                    1  // Borrowing one copy at a time
+            int requestedCopies = Integer.parseInt(copiesInput);
+
+            if (requestedCopies <= 0) {
+                throw new IllegalArgumentException("Please enter a positive number of copies.");
+            }
+
+            if (requestedCopies > availableCopies) {
+                throw new IllegalArgumentException("Cannot request more copies than available.");
+            }
+
+            // Submit borrow request to database with PENDING status
+            boolean requestSuccess = MySQLBorrowRequestDb.addRequest(
+                    currentUser.getId(),
+                    isbn,
+                    requestedCopies,
+                    "PENDING"  // Add the status parameter
             );
 
-            if (success) {
-                // Immediately refresh the book list to show updated counts
-                loadBooks();
+            if (requestSuccess) {
+                // Record the request in borrowing history with PENDING status
+                boolean historySuccess = BorrowingHistory.BorrowedHistory(
+                        currentUser.getId(),
+                        currentUser.getLastName(),
+                        title,
+                        author,
+                        requestedCopies,
+                        "PENDING"
+                );
 
-                JOptionPane.showMessageDialog(this,
-                        "Book borrowed successfully!\nPlease return within 14 days to avoid late fees.",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                if (historySuccess) {
+                    JOptionPane.showMessageDialog(this,
+                            "Your borrow request has been submitted successfully!\n" +
+                                    "Please wait for admin approval.",
+                            "Request Submitted",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    // Refresh the book list to show updated availability
+                    loadBooks();
+                } else {
+                    throw new Exception("Failed to record request in history.");
+                }
             } else {
-                JOptionPane.showMessageDialog(this,
-                        "Failed to borrow book. Please try again.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                throw new Exception("Failed to submit borrow request.");
             }
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid number.",
+                    "Invalid Input",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this,
+                    e.getMessage(),
+                    "Invalid Request",
+                    JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "An error occurred: " + e.getMessage(),
@@ -282,6 +323,7 @@ public class UserDashboard extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+
     private void returnBook() {
         // First, load user's borrowed books
         List<Borrowed_requests.BorrowRequest> borrowedBooks = BorrowingHistory.LoadHistoryByUser(currentUser.getLastName())
@@ -353,7 +395,14 @@ public class UserDashboard extends JFrame {
         }
     }
     private void showProfile() {
-
+        // Verify currentUser is not null
+        if (currentUser == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Error: No user logged in",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         JDialog profileDialog = new JDialog(this, "User Profile", true);
         profileDialog.setSize(400, 300);
@@ -368,24 +417,13 @@ public class UserDashboard extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // Create fields for user details
+        // Create fields with current user data
         JTextField firstNameField = new JTextField(currentUser.getFirstName());
         JTextField lastNameField = new JTextField(currentUser.getLastName());
-        JTextField userIDField = new JTextField(currentUser.getId());
+        JTextField userIDField = new JTextField(String.valueOf(currentUser.getId()));
         JTextField emailField = new JTextField(currentUser.getEmail());
 
-        // Get user data using your existing USER_DB class
-        USER_DB userDb = new USER_DB();
-        users currentUser = userDb.getUser(currentUserId);
-
-//        if (currentUser != null) {
-//            firstNameField.setText(currentUser.getFirstName());
-//            lastNameField.setText(currentUser.getLastName());
-//            userIDField.setText(String.valueOf(currentUser.getId()));
-//            emailField.setText(currentUser.getEmail());
-//        }
-
-        // Make fields non-editable
+        // Make fields non-editable initially
         firstNameField.setEditable(false);
         lastNameField.setEditable(false);
         userIDField.setEditable(false);
@@ -407,45 +445,69 @@ public class UserDashboard extends JFrame {
 
         // Edit button action
         editButton.addActionListener(e -> {
-            JTextField editFirstNameField = new JTextField(firstNameField.getText());
-            JTextField editLastNameField = new JTextField(lastNameField.getText());
-            JTextField editEmailField = new JTextField(emailField.getText());
+            try {
+                JTextField editFirstNameField = new JTextField(currentUser.getFirstName());
+                JTextField editLastNameField = new JTextField(currentUser.getLastName());
+                JTextField editEmailField = new JTextField(currentUser.getEmail());
 
-            JPanel inputPanel = new JPanel(new GridLayout(6, 2, 5, 5));
-            inputPanel.add(new JLabel("First Name:"));
-            inputPanel.add(editFirstNameField);
-            inputPanel.add(new JLabel("Last Name:"));
-            inputPanel.add(editLastNameField);
-            inputPanel.add(new JLabel("Email:"));
-            inputPanel.add(editEmailField);
+                JPanel inputPanel = new JPanel(new GridLayout(6, 2, 5, 5));
+                inputPanel.add(new JLabel("First Name:"));
+                inputPanel.add(editFirstNameField);
+                inputPanel.add(new JLabel("Last Name:"));
+                inputPanel.add(editLastNameField);
+                inputPanel.add(new JLabel("Email:"));
+                inputPanel.add(editEmailField);
 
-            int result = JOptionPane.showConfirmDialog(profileDialog,
-                    inputPanel,
-                    "Edit Profile",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE);
+                int result = JOptionPane.showConfirmDialog(profileDialog,
+                        inputPanel,
+                        "Edit Profile",
+                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.PLAIN_MESSAGE);
 
-            if (result == JOptionPane.OK_OPTION) {
-                // Update the user object
-                currentUser.setFirstName(editFirstNameField.getText());
-                currentUser.setLastName(editLastNameField.getText());
-                currentUser.setEmail(editEmailField.getText());
+                if (result == JOptionPane.OK_OPTION) {
+                    // Validate input fields
+                    String newFirstName = editFirstNameField.getText().trim();
+                    String newLastName = editLastNameField.getText().trim();
+                    String newEmail = editEmailField.getText().trim();
 
-                // Update in database
-                if (USER_DB.add(currentUser)) { // Using your existing add method to update
-                    firstNameField.setText(editFirstNameField.getText());
-                    lastNameField.setText(editLastNameField.getText());
-                    emailField.setText(editEmailField.getText());
-                    JOptionPane.showMessageDialog(profileDialog,
-                            "Profile updated successfully!",
-                            "Success",
-                            JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(profileDialog,
-                            "Error updating profile",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE);
+                    if (newFirstName.isEmpty() || newLastName.isEmpty() || newEmail.isEmpty()) {
+                        throw new IllegalArgumentException("All fields must be filled out");
+                    }
+
+                    // Update the current user object
+                    currentUser.setFirstName(newFirstName);
+                    currentUser.setLastName(newLastName);
+                    currentUser.setEmail(newEmail);
+
+                    // Update in database
+                    if (USER_DB.add(currentUser)) {
+                        // Update display fields
+                        firstNameField.setText(newFirstName);
+                        lastNameField.setText(newLastName);
+                        emailField.setText(newEmail);
+
+                        // Update window title
+                        setTitle("Library Management System - Welcome " +
+                                currentUser.getFirstName() + " " + currentUser.getLastName());
+
+                        JOptionPane.showMessageDialog(profileDialog,
+                                "Profile updated successfully!",
+                                "Success",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        throw new Exception("Failed to update profile in database");
+                    }
                 }
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(profileDialog,
+                        "Invalid input: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(profileDialog,
+                        "Error updating profile: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -457,7 +519,6 @@ public class UserDashboard extends JFrame {
         profileDialog.add(mainPanel);
         profileDialog.setVisible(true);
     }
-
     // Helper method remains the same
     private void addLabelAndField(JPanel panel, String labelText, JTextField field, GridBagConstraints gbc) {
         JLabel label = new JLabel(labelText);
@@ -471,51 +532,44 @@ public class UserDashboard extends JFrame {
     }
 
     private void showHistory() {
+        // Create a new JFrame to show the history
         JFrame historyFrame = new JFrame("Borrowing History");
         historyFrame.setSize(800, 400);
         historyFrame.setLocationRelativeTo(null);
-        historyFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        historyFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);  // Ensure the window can be closed properly
+
+        // Set layout to BorderLayout to ensure components are added correctly
         historyFrame.setLayout(new BorderLayout());
 
-        // Create table model
+        // Create a table model with relevant columns for history
         DefaultTableModel historyTableModel = new DefaultTableModel();
-        historyTableModel.setColumnIdentifiers(new String[]{"ISBN", "Book Title", "Author", "Genre", "Status", "Borrow Date"});
+        historyTableModel.setColumnIdentifiers(new String[]{"ID", "User Name", "Book Name", "Author", "Copies", "Status"});
 
+        // Create JTable and JScrollPane
         JTable historyTable = new JTable(historyTableModel);
         JScrollPane scrollPane = new JScrollPane(historyTable);
 
+        // Fetch user's borrowing history from BorrowingHistory or equivalent
         try {
-            // Get user's borrowing history
+            // Retrieve borrowing history of the logged-in user
             List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(currentUser.getLastName());
+            System.out.println("User history size: " + userHistory.size());
 
+            // Iterate over each borrowed request
             for (Borrowed_requests.BorrowRequest request : userHistory) {
-                Books book = request.getBook();  // Now this will properly fetch the book
-                if (book != null) {
+                Books book = request.getBook();  // Assuming the BorrowRequest has a getBook() method
+                if (book != null && request != null) {
+                    // Add a row to the history table for each borrow entry
                     historyTableModel.addRow(new Object[]{
-                            book.getISBN(),
-                            book.getTitle(),
-                            book.getAuthor(),
-                            book.getGenre(),
-                            request.getStatus(),
-                            request.getBorrowReqDate().toString()
+                            request.getId(),                // Book ID or Borrow Request ID
+                            request.getUser(),          // User Name
+                            book.getTitle(),                // Book Title
+                            book.getAuthor(),               // Book Author
+                            request.getCopies(),            // Number of copies borrowed
+                            request.getStatus()             // Status can be "BORROWED", "RETURNED", etc.
                     });
                 }
             }
-
-            // Add status filter at the top
-            JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            JComboBox<String> statusFilter = new JComboBox<>(new String[]{"All", "BORROWED", "RETURNED"});
-            filterPanel.add(new JLabel("Filter by Status: "));
-            filterPanel.add(statusFilter);
-
-            statusFilter.addActionListener(e -> {
-                String selectedStatus = (String) statusFilter.getSelectedItem();
-                filterHistoryTable(historyTableModel, userHistory, selectedStatus);
-            });
-
-            historyFrame.add(filterPanel, BorderLayout.NORTH);
-            historyFrame.add(scrollPane, BorderLayout.CENTER);
-
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Error loading borrowing history: " + e.getMessage(),
@@ -523,27 +577,13 @@ public class UserDashboard extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
 
-        historyFrame.setVisible(true);
-    }
+        // Add the table to the frame
+        historyFrame.add(scrollPane, BorderLayout.CENTER);
 
-    private void filterHistoryTable(DefaultTableModel model, List<Borrowed_requests.BorrowRequest> history, String status) {
-        model.setRowCount(0); // Clear current table
-
-        for (Borrowed_requests.BorrowRequest request : history) {
-            if (status.equals("All") || request.getStatus().equals(status)) {
-                Books book = request.getBook();
-                if (book != null) {
-                    model.addRow(new Object[]{
-                            book.getISBN(),
-                            book.getTitle(),
-                            book.getAuthor(),
-                            book.getGenre(),
-                            request.getStatus(),
-                            request.getBorrowReqDate().toString()
-                    });
-                }
-            }
-        }
+        // Make sure the history frame is visible in the EDT
+        SwingUtilities.invokeLater(() -> {
+            historyFrame.setVisible(true);
+        });
     }
 
 

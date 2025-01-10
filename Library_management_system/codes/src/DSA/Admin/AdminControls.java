@@ -95,14 +95,14 @@ public class AdminControls {
                 // Update database first
                 MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
 
-                // Record the borrow transaction in history
+                // Record the borrow transaction in history with PENDING status
                 BorrowingHistory.BorrowedHistory(
                         userId,
                         lastName,
                         title,
                         author,
                         copies,
-                        "BORROWED"
+                        "PENDING"  // Set initial status as PENDING
                 );
 
                 return true;
