@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import static DSA.Admin.BorrowingHistory.fetchBookByISBN;
+
 public class MySQLBorrowRequestDb {
 
     // Add a new borrow request to the database
@@ -140,4 +142,62 @@ public class MySQLBorrowRequestDb {
         }
         return "Unknown User";
     }
+    public static boolean borrowBook(int isbn, String userName, int requestedCopies) {
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+            conn.setAutoCommit(false);  // Start transaction
+
+            // 1. Check if enough copies are available
+            Books book = fetchBookByISBN(isbn);
+            if (book == null || book.getAvailableCopy() < requestedCopies) {
+                return false;
+            }
+
+            // 2. Add to borrow request table with PENDING status
+            String requestSql = "INSERT INTO " + DB_Connection.RequestTable +
+                    "(book_id, user_name, copies, status, request_date) VALUES (?, ?, ?, 'PENDING', NOW())";
+            try (PreparedStatement pstmt = conn.prepareStatement(requestSql)) {
+                pstmt.setInt(1, isbn);
+                pstmt.setString(2, userName);
+                pstmt.setInt(3, requestedCopies);
+                pstmt.executeUpdate();
+            }
+
+            // 3. Add to borrowing history with PENDING status
+            String historySql = "INSERT INTO " + DB_Connection.HistoryTable +
+                    "(Id, UserName, BookName, Author, Copies, Status) VALUES (?, ?, ?, ?, ?, 'PENDING')";
+            try (PreparedStatement pstmt = conn.prepareStatement(historySql)) {
+                pstmt.setInt(1, isbn);
+                pstmt.setString(2, userName);
+                pstmt.setString(3, book.getTitle());
+                pstmt.setString(4, book.getAuthor());
+                pstmt.setInt(5, requestedCopies);
+                pstmt.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
 }

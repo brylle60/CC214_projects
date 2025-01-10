@@ -228,6 +228,7 @@ public class UserDashboard extends JFrame {
 
     private void borrowBook(Books book, users user) {
         int selectedRow = bookTable.getSelectedRow();
+
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,
                     "Please select a book to request.",
@@ -256,13 +257,14 @@ public class UserDashboard extends JFrame {
                 "Request Copies",
                 JOptionPane.QUESTION_MESSAGE);
 
-        if (copiesInput == null) {
-            return; // User cancelled
+        if (copiesInput == null || copiesInput.trim().isEmpty()) {
+            return; // User cancelled or input is empty
         }
 
         try {
-            int requestedCopies = Integer.parseInt(copiesInput);
+            int requestedCopies = Integer.parseInt(copiesInput.trim());
 
+            // Validate the requested number of copies
             if (requestedCopies <= 0) {
                 throw new IllegalArgumentException("Please enter a positive number of copies.");
             }
@@ -271,19 +273,19 @@ public class UserDashboard extends JFrame {
                 throw new IllegalArgumentException("Cannot request more copies than available.");
             }
 
-            // Submit borrow request to database with PENDING status
+            // Submit borrow request to the database with PENDING status
             boolean requestSuccess = MySQLBorrowRequestDb.addRequest(
-                    currentUser.getId(),
+                    user.getId(),
                     isbn,
                     requestedCopies,
-                    "PENDING"  // Add the status parameter
+                    "PENDING"  // Status: PENDING
             );
 
             if (requestSuccess) {
                 // Record the request in borrowing history with PENDING status
                 boolean historySuccess = BorrowingHistory.BorrowedHistory(
-                        currentUser.getId(),
-                        currentUser.getLastName(),
+                        user.getId(),
+                        user.getLastName(),
                         title,
                         author,
                         requestedCopies,
@@ -298,7 +300,7 @@ public class UserDashboard extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE);
 
                     // Refresh the book list to show updated availability
-                    loadBooks();
+                    loadBooks();  // Method to reload the book list after request
                 } else {
                     throw new Exception("Failed to record request in history.");
                 }
@@ -308,7 +310,7 @@ public class UserDashboard extends JFrame {
 
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this,
-                    "Please enter a valid number.",
+                    "Please enter a valid number for the requested copies.",
                     "Invalid Input",
                     JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException e) {
@@ -323,6 +325,7 @@ public class UserDashboard extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     private void returnBook() {
         // First, load user's borrowed books
