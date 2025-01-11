@@ -84,6 +84,7 @@ public class AdminDashboard extends JFrame {
         });
 
         reportsBtn.addActionListener(e -> {
+
             // Dispose of the current AdminDashboard
             dispose();
 
@@ -98,7 +99,7 @@ public class AdminDashboard extends JFrame {
                 frame.add(reportsDashboard); // Add ReportsDashboard JPanel to the frame
                 frame.setVisible(true);
             });
-        });
+
 
 
 

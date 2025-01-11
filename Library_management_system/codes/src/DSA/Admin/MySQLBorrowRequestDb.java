@@ -76,13 +76,13 @@ public class MySQLBorrowRequestDb {
     }
 
     // Update request status
-    public static boolean updateRequestStatus(int requestId, String status, int userId, String bookTitle) {
-        String sql = "UPDATE " + DB_Connection.RequestTable + " SET status = ? WHERE request_id = ?";
-        String historySql = "UPDATE borrowing_history SET status = ? WHERE user_id = ? AND book_title = ? AND status = 'PENDING'";
+    public static boolean updateRequestStatus(int requestId, String status, int userId) {
+        String sql = "UPDATE " + DB_Connection.RequestTable + " SET status = ? WHERE user_id = ?";
+        String historySql = "UPDATE requestTable SET status = ? WHERE user_id = ? AND status = 'PENDING'";
 
         Connection conn = null;
         try {
-            conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+            conn = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
             conn.setAutoCommit(false);  // Start transaction
 
             // Update request status
@@ -96,7 +96,6 @@ public class MySQLBorrowRequestDb {
             try (PreparedStatement pstmt = conn.prepareStatement(historySql)) {
                 pstmt.setString(1, status);
                 pstmt.setInt(2, userId);
-                pstmt.setString(3, bookTitle);
                 pstmt.executeUpdate();
             }
 
