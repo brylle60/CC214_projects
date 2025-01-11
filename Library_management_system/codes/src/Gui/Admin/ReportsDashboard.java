@@ -12,21 +12,23 @@ import java.awt.event.FocusEvent;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import DSA.Admin.BorrowingHistory;
-import DSA.Admin.Borrowed_requests;
+
+import DSA.Admin.*;
 import DSA.Admin.Borrowed_requests.BorrowRequest;
-import DSA.Admin.DB_Connection;
 
 import java.time.LocalDateTime;
 
 public class ReportsDashboard extends JPanel {
-    private final JTable borrowHistoryTable;
+    private JTextField searchField;
+    private JComboBox<String> sortByComboBox;
+    private final JTable requestsTable;
+    private final DefaultTableModel requestsModel;
     private final DefaultTableModel borrowHistoryModel;
-    private final JTable activityLogsTable;
     private final DefaultTableModel activityLogsModel;
-    private JTable requestsTable;
-    private DefaultTableModel requestsModel;
+    private final JTable borrowHistoryTable;
+    private final JTable activityLogsTable;
     private final JComboBox<String> statusFilter;
+
     private static final Color DARK_GREEN = new Color(40, 54, 44);
     private static final Color BUTTON_COLOR = new Color(184, 207, 229);
 
@@ -35,46 +37,7 @@ public class ReportsDashboard extends JPanel {
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Create tabbed pane for different views
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("Serif", Font.PLAIN, 14));
-
-        // Add Book Requests Panel
-        JPanel bookRequestsPanel = createBookRequestsPanel();
-        tabbedPane.addTab("Book Requests", bookRequestsPanel);
-
-        // Create Borrowing History panel
-        JPanel borrowingHistoryPanel = new JPanel(new BorderLayout(10, 10));
-        borrowingHistoryPanel.setBackground(Color.WHITE);
-
-        // Create filter panel
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        filterPanel.setBackground(Color.WHITE);
-
-        JLabel filterLabel = new JLabel("Filter by Status:");
-        statusFilter = new JComboBox<>(new String[]{"All", "Borrowed", "Returned", "Rejected"});
-        JButton refreshButton = createStyledButton("↻ Refresh");
-        JButton returnButton = createStyledButton("Return Book");
-
-        filterPanel.add(filterLabel);
-        filterPanel.add(statusFilter);
-        filterPanel.add(refreshButton);
-        filterPanel.add(returnButton);
-
-        // Add return button action listener
-        returnButton.addActionListener(e -> handleReturnBook());
-
-        // Configure tables
-        String[] borrowColumns = {"ID", "User Name", "Book Title", "Author", "Copies", "Status"};
-        borrowHistoryModel = new DefaultTableModel(borrowColumns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        borrowHistoryTable = new JTable(borrowHistoryModel);
-        configureTable(borrowHistoryTable);
-
+        // Initialize table models
         String[] requestColumns = {"Request ID", "User", "Book Title", "Author", "Copies", "Request Date", "Status"};
         requestsModel = new DefaultTableModel(requestColumns, 0) {
             @Override
@@ -82,8 +45,14 @@ public class ReportsDashboard extends JPanel {
                 return false;
             }
         };
-        requestsTable = new JTable(requestsModel);
-        configureTable(requestsTable);
+
+        String[] historyColumns = {"ID", "User Name", "Book Title", "Author", "Copies", "Status"};
+        borrowHistoryModel = new DefaultTableModel(historyColumns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
         String[] logColumns = {"Time", "User", "Action", "Details"};
         activityLogsModel = new DefaultTableModel(logColumns, 0) {
@@ -92,271 +61,241 @@ public class ReportsDashboard extends JPanel {
                 return false;
             }
         };
+
+        // Initialize tables
+        requestsTable = new JTable(requestsModel);
+        borrowHistoryTable = new JTable(borrowHistoryModel);
         activityLogsTable = new JTable(activityLogsModel);
+
+        // Initialize status filter
+        statusFilter = new JComboBox<>(new String[]{"All", "PENDING", "BORROWED", "RETURNED", "REJECTED"});
+        statusFilter.addActionListener(e -> filterBorrowingHistory());
+
+        // Configure tables
+        configureTable(requestsTable);
+        configureTable(borrowHistoryTable);
         configureTable(activityLogsTable);
 
-        // Add components to panels
-        borrowingHistoryPanel.add(filterPanel, BorderLayout.NORTH);
-        borrowingHistoryPanel.add(new JScrollPane(borrowHistoryTable), BorderLayout.CENTER);
+        // Create main layout
+        createLayout();
 
-        JPanel activityLogsPanel = new JPanel(new BorderLayout());
-        activityLogsPanel.setBackground(Color.WHITE);
-        activityLogsPanel.add(new JScrollPane(activityLogsTable), BorderLayout.CENTER);
-
-        // Add panels to tabbed pane
-        tabbedPane.addTab("Borrowing History", borrowingHistoryPanel);
-        tabbedPane.addTab("Activity Logs", activityLogsPanel);
-
-        add(tabbedPane, BorderLayout.CENTER);
-
-        // Add listeners
-        statusFilter.addActionListener(e -> filterBorrowingHistory());
-        refreshButton.addActionListener(e -> refreshData());
+        // Add action listeners
+        setupActionListeners();
 
         // Initial data load
         refreshData();
     }
 
-    private JPanel createBookRequestsPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(Color.WHITE);
+    private void createLayout() {
+        // Create main panel with BorderLayout
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Create table model with columns
-        String[] columns = {
-                "Request ID", "User", "Book Title", "Author", "Copies", "Request Date", "Status"
-        };
-        requestsModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        // Create and add top panel
+        mainPanel.add(createTopPanel(), BorderLayout.NORTH);
 
-        // Create and configure the table
-        requestsTable = new JTable(requestsModel);
-        configureTable(requestsTable);
+        // Create and add center panel with tables
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Pending Requests", createRequestsPanel());
+        tabbedPane.addTab("Borrowing History", createHistoryPanel());
+        tabbedPane.addTab("Activity Logs", createLogsPanel());
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
-        // Add table to a scroll pane
-        JScrollPane scrollPane = new JScrollPane(requestsTable);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // Add main panel to frame
+        add(mainPanel);
+    }
 
-        // Create button panel
+    private JPanel createTopPanel() {
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchField = new JTextField(20);
+        JButton searchButton = new JButton("Search");
+        String[] sortOptions = {"Genre", "Alphabetical Order", "Date", "Status"};
+        sortByComboBox = new JComboBox<>(sortOptions);
+        sortByComboBox.setPreferredSize(new Dimension(150, 25));
+
+        topPanel.add(searchField);
+        topPanel.add(searchButton);
+        topPanel.add(new JLabel("Sort by:"));
+        topPanel.add(sortByComboBox);
+        topPanel.add(statusFilter);
+
+        return topPanel;
+    }
+
+    private JPanel createRequestsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new JScrollPane(requestsTable), BorderLayout.CENTER);
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(Color.WHITE);
-
-        // In your createBookRequestsPanel method
-        // Create buttons
-        JButton acceptButton = createStyledButton("Accept Request");
-        JButton declineButton = createStyledButton("Decline Request");
-
-        // Create a selection listener that maintains the selection
-        ListSelectionListener selectionListener = new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    int viewRow = requestsTable.getSelectedRow();
-                    if (viewRow >= 0) {
-                        // Store the selected row
-                        final int selectedRow = viewRow;
-                        System.out.println("Selection stored: " + selectedRow);
-                    }
-                }
-            }
-        };
-
-        requestsTable.getSelectionModel().addListSelectionListener(selectionListener);
-
-        // Use action listeners that preserve selection
-        acceptButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Make sure table maintains focus
-                requestsTable.requestFocusInWindow();
-                handleRequestAction(true);
-            }
-        });
-
-        declineButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Make sure table maintains focus
-                requestsTable.requestFocusInWindow();
-                handleRequestAction(false);
-            }
-        });
-        JButton refreshRequestsButton = createStyledButton("↻ Refresh");
-        refreshRequestsButton.addActionListener(e -> refreshRequests());
-
-        buttonPanel.add(acceptButton);
-        buttonPanel.add(declineButton);
-        buttonPanel.add(refreshRequestsButton);
-
-        // Add components to main panel
-        panel.add(scrollPane, BorderLayout.CENTER);
+        buttonPanel.add(createStyledButton("Confirm Request"));
+        buttonPanel.add(createStyledButton("Reject Request"));
+        buttonPanel.add(createStyledButton("Refresh"));
         panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Initial load of requests
-        refreshRequests();
 
         return panel;
     }
 
+    private JPanel createHistoryPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new JScrollPane(borrowHistoryTable), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createLogsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new JScrollPane(activityLogsTable), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void setupActionListeners() {
+        // Add button action listeners
+        findButton("Confirm Request").addActionListener(e -> handleRequestAction(true));
+        findButton("Reject Request").addActionListener(e -> handleRequestAction(false));
+        findButton("Refresh").addActionListener(e -> refreshData());
+
+        // Add table selection listener
+        requestsTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updateButtonStates();
+            }
+        });
+    }
+
+    private JButton findButton(String text) {
+        // Get the main panel
+        JPanel mainPanel = (JPanel) getComponent(0);
+
+        // Get the tabbed pane
+        JTabbedPane tabbedPane = (JTabbedPane) mainPanel.getComponent(1);
+
+        // Get the requests panel (first tab)
+        JPanel requestsPanel = (JPanel) tabbedPane.getComponent(0);
+
+        // Get the button panel (at SOUTH position)
+        JPanel buttonPanel = (JPanel) ((BorderLayout) requestsPanel.getLayout())
+                .getLayoutComponent(BorderLayout.SOUTH);
+
+        // Find the button with matching text
+        for (Component comp : buttonPanel.getComponents()) {
+            if (comp instanceof JButton && ((JButton) comp).getText().equals(text)) {
+                return (JButton) comp;
+            }
+        }
+
+        throw new RuntimeException("Button not found: " + text);
+    }
+
+    private void updateButtonStates() {
+        boolean rowSelected = requestsTable.getSelectedRow() != -1;
+        findButton("Confirm Request").setEnabled(rowSelected);
+        findButton("Reject Request").setEnabled(rowSelected);
+    }
     private void configureTable(JTable table) {
         table.setRowHeight(30);
+        table.setFont(new Font("Serif", Font.PLAIN, 14));
 
-
-        // Configure table header
+        // Configure header
         JTableHeader header = table.getTableHeader();
         header.setBackground(DARK_GREEN);
         header.setForeground(Color.WHITE);
         header.setFont(new Font("Serif", Font.BOLD, 14));
 
-        // Configure table appearance
-        table.setFont(new Font("Serif", Font.PLAIN, 14));
-        table.setGridColor(Color.LIGHT_GRAY);
-        table.setShowGrid(true);
+        // Configure selection
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setSelectionBackground(new Color(232, 242, 254));
         table.setSelectionForeground(Color.BLACK);
 
-        // Configure column widths
+        // Configure column widths based on table type
         TableColumnModel columnModel = table.getColumnModel();
-        int[] columnWidths = determineColumnWidths(table);
+        int columnCount = columnModel.getColumnCount();
 
-        for (int i = 0; i < Math.min(columnWidths.length, columnModel.getColumnCount()); i++) {
-            columnModel.getColumn(i).setPreferredWidth(columnWidths[i]);
+        if (table == requestsTable) {
+            // Request table has 7 columns
+            int[] widths = {80, 100, 200, 150, 80, 150, 100};
+            for (int i = 0; i < Math.min(columnCount, widths.length); i++) {
+                columnModel.getColumn(i).setPreferredWidth(widths[i]);
+            }
+        } else if (table == borrowHistoryTable) {
+            // Borrowing history table has 6 columns
+            int[] widths = {80, 100, 200, 150, 80, 100};
+            for (int i = 0; i < Math.min(columnCount, widths.length); i++) {
+                columnModel.getColumn(i).setPreferredWidth(widths[i]);
+            }
+        } else if (table == activityLogsTable) {
+            // Activity logs table has 4 columns
+            int[] widths = {150, 100, 100, 250};
+            for (int i = 0; i < Math.min(columnCount, widths.length); i++) {
+                columnModel.getColumn(i).setPreferredWidth(widths[i]);
+            }
         }
-        // Set up selection mode
 
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setRowSelectionAllowed(true);
-        table.setCellSelectionEnabled(false);
-        table.setColumnSelectionAllowed(false);
-
-        // Make sure selection persists when table loses focus
-        table.putClientProperty("terminateEditOnFocusLost", Boolean.FALSE);
-
-        // Ensure the table can maintain selection
-        table.setFocusable(true);
-
-        // Add a focus listener to debug focus issues
-        table.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                System.out.println("Table lost focus");
-            }
-
-            @Override
-            public void focusGained(FocusEvent e) {
-                System.out.println("Table gained focus");
-            }
-        });
-        // Center align relevant columns
+        // Center align columns based on table type
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        applyCenterAlignment(table, centerRenderer);
-    }
 
-    private int[] determineColumnWidths(JTable table) {
-        if (table == borrowHistoryTable) {
-            return new int[]{80, 100, 200, 150, 80, 100};
-        } else if (table == requestsTable) {
-            return new int[]{80, 100, 200, 150, 80, 150, 100};
+        if (table == requestsTable) {
+            // Center align ID, Copies, and Status columns for requests table
+            table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // ID
+            table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // Copies
+            table.getColumnModel().getColumn(6).setCellRenderer(centerRenderer); // Status
+        } else if (table == borrowHistoryTable) {
+            // Center align ID, Copies, and Status columns for history table
+            table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // ID
+            table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // Copies
+            table.getColumnModel().getColumn(5).setCellRenderer(centerRenderer); // Status
         } else if (table == activityLogsTable) {
-            return new int[]{150, 100, 100, 250};
-        }
-        return new int[]{};
-    }
-
-    private void applyCenterAlignment(JTable table, DefaultTableCellRenderer centerRenderer) {
-        if (table == borrowHistoryTable || table == requestsTable) {
-            table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-            table.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
-            table.getColumnModel().getColumn(table.getColumnCount() - 1).setCellRenderer(centerRenderer);
-        } else if (table == activityLogsTable) {
-            table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-            table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+            // Center align Time and Action columns for logs table
+            table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // Time
+            table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer); // Action
         }
     }
 
-
-    private void handleRequestAction(boolean isAccept) {
-        // Get the selected row index from the VIEW perspective
-        int viewRow = requestsTable.getSelectedRow();
-
-        // Debug output
-        System.out.println("Selected row index: " + viewRow);
-        System.out.println("Total rows in table: " + requestsTable.getRowCount());
-
-        if (viewRow == -1) {
+    private void handleRequestAction(boolean isConfirm) {
+        int selectedRow = requestsTable.getSelectedRow();
+        if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,
-                    "Please select a request first",
+                    "Please select a request to process",
                     "No Selection",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Convert the view row index to model row index (in case table is sorted)
-       // Request ID column
-
         try {
-          //  int modelRow = requestsTable.convertRowIndexToModel(viewRow);
-            int modelRow = requestsTable.convertRowIndexToModel(viewRow);
+            int modelRow = requestsTable.convertRowIndexToModel(selectedRow);
+            int requestId = (int) requestsModel.getValueAt(modelRow, 0);
+            String userName = (String) requestsModel.getValueAt(modelRow, 1);
+            String bookTitle = (String) requestsModel.getValueAt(modelRow, 2);
+            String author = (String) requestsModel.getValueAt(modelRow, 3);
+            int requestedCopies = (int) requestsModel.getValueAt(modelRow, 4);
 
-
-            // Check if the selected row is a "No pending requests" placeholder
-            String bookTitle = (String) requestsTable.getModel().getValueAt(modelRow, 2);
-            if ("No pending requests".equals(bookTitle)) {
-                JOptionPane.showMessageDialog(this,
-                        "Please select a valid request",
-                        "Invalid Selection",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // Get the actual request ID from the table
-            Object requestIdObj = requestsTable.getModel().getValueAt(modelRow, 0);
-            if (requestIdObj == null || requestIdObj.toString().equals("-1")) {
-                JOptionPane.showMessageDialog(this,
-                        "Invalid request ID",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            String user = (String) requestsTable.getModel().getValueAt(modelRow, 1);
-            int requestId = Integer.parseInt(requestsModel.getValueAt(modelRow, 0).toString());
-
-
-            boolean success;
-            if (isAccept) {
-                success = Borrowed_requests.confirmRequest(bookTitle, user, requestId);
-            } else {
-                success = Borrowed_requests.rejectRequest(bookTitle, user);
-            }
+            String newStatus = isConfirm ? "BORROWED" : "REJECTED";
+            boolean success = MySQLBorrowRequestDb.updateRequestStatus(
+                    requestId,
+                    newStatus,
+                    requestId
+            );
 
             if (success) {
-                refreshRequests();
-                String action = isAccept ? "accepted" : "rejected";
-                JOptionPane.showMessageDialog(this,
-                        "Request " + action + " successfully",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
-
-                addActivityLog(
-                        LocalDateTime.now().toString(),
-                        "Admin",
-                        isAccept ? "Accept Request" : "Reject Request",
-                        (isAccept ? "Accepted" : "Rejected") + " book request: " + bookTitle + " for user: " + user
+                success = BorrowingHistory.BorrowedHistory(
+                        requestId,
+                        userName,
+                        bookTitle,
+                        author,
+                        requestedCopies,
+                        isConfirm ? "BORROWED" : "REJECTED"
                 );
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "Failed to " + (isAccept ? "accept" : "reject") + " request. " +
-                                "Please check if the book is available.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+
+                if (isConfirm) {
+                    success = MySQLbookDb.updateBookCopies(bookTitle, requestedCopies, false);
+                }
+
+                if (success) {
+                    String message = isConfirm ? "Request confirmed successfully" : "Request rejected successfully";
+                    JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
+                    refreshRequests();
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
             JOptionPane.showMessageDialog(this,
                     "Error processing request: " + e.getMessage(),
                     "Error",
@@ -459,11 +398,12 @@ public class ReportsDashboard extends JPanel {
         return button;
     }
 
+
     private void refreshRequests() {
         requestsModel.setRowCount(0);
+        try (Connection connection = DriverManager.getConnection(
+                DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass)) {
 
-        try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass)) {
-            // Modified query to include proper column names and table joins
             String query = "SELECT r.user_id as request_id, u.lastName, b.Title, b.Author, " +
                     "r.copies, r.request_date, r.status " +
                     "FROM requestTable r " +
@@ -479,19 +419,18 @@ public class ReportsDashboard extends JPanel {
                 while (rs.next()) {
                     hasRequests = true;
                     Object[] row = new Object[]{
-                            rs.getInt("request_id"),      // Using aliased column name
-                            rs.getString("lastName"),     // User's last name
-                            rs.getString("Title"),        // Book title
-                            rs.getString("Author"),       // Author
-                            rs.getInt("copies"),          // Number of copies
-                            formatDateTime(rs.getTimestamp("request_date")), // Formatted date
-                            rs.getString("status")        // Status
+                            rs.getInt("request_id"),
+                            rs.getString("lastName"),
+                            rs.getString("Title"),
+                            rs.getString("Author"),
+                            rs.getInt("copies"),
+                            formatDateTime(rs.getTimestamp("request_date")),
+                            rs.getString("status")
                     };
                     requestsModel.addRow(row);
                 }
 
                 if (!hasRequests) {
-                    // Add placeholder row when no requests exist
                     requestsModel.addRow(new Object[]{
                             -1, "--", "No pending requests", "--", 0, "--", "PENDING"
                     });
@@ -499,14 +438,10 @@ public class ReportsDashboard extends JPanel {
             }
         } catch (SQLException e) {
             System.err.println("Error refreshing requests: " + e.getMessage());
-            e.printStackTrace();
-            // Add error indication row
             requestsModel.addRow(new Object[]{
                     -1, "--", "Error loading requests", "--", 0, "--", "ERROR"
             });
         }
-
-        requestsTable.repaint();
     }
 
     // Helper method to format datetime
@@ -517,31 +452,56 @@ public class ReportsDashboard extends JPanel {
     }
     private void refreshData() {
         refreshBorrowingHistory();
-        refreshActivityLogs();
         refreshRequests();
     }
 
     // In ReportsDashboard.java
     private void refreshBorrowingHistory() {
         borrowHistoryModel.setRowCount(0);
-        List<BorrowRequest> historyList = BorrowingHistory.LoadAllHistory();
 
-        System.out.println("Loaded " + historyList.size() + " history records");
+        try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass)) {
+            String query = "SELECT h.Id, u.lastName, h.BookName, h.Author, h.Copies, h.Status " +
+                    "FROM " + DB_Connection.HistoryTable + " h " +
+                    "JOIN user.users u ON h.UserName = u.lastName " +
+                    "ORDER BY h.Id DESC";
 
-        for (BorrowRequest request : historyList) {
-            Object[] row = new Object[]{
-                    request.getId(),
-                    request.getUser(),
-                    request.getTitle(),
-                    request.getAuthor(),
-                    request.getCopies(),
-                    request.getStatus()
-            };
-            borrowHistoryModel.addRow(row);
+            try (PreparedStatement stmt = connection.prepareStatement(query);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                boolean hasHistory = false;
+                while (rs.next()) {
+                    hasHistory = true;
+                    Object[] row = new Object[]{
+                            rs.getInt("Id"),          // ID
+                            rs.getString("lastName"), // User Name
+                            rs.getString("BookName"), // Book Title
+                            rs.getString("Author"),   // Author
+                            rs.getInt("Copies"),      // Copies
+                            rs.getString("Status")    // Status
+                    };
+                    borrowHistoryModel.addRow(row);
+                }
+
+                if (!hasHistory) {
+                    // Add placeholder row when no history exists
+                    borrowHistoryModel.addRow(new Object[]{
+                            -1, "--", "No borrowing history", "--", 0, "--"
+                    });
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error refreshing borrowing history: " + e.getMessage());
+            e.printStackTrace();
+            // Add error indication row
+            borrowHistoryModel.addRow(new Object[]{
+                    -1, "--", "Error loading history", "--", 0, "ERROR"
+            });
         }
-        System.out.println("Added " + borrowHistoryModel.getRowCount() + " rows to table");
+
+        borrowHistoryTable.repaint();
     }
-//
+
+    //
 //    private void refreshRequests() {
 //        requestsModel.setRowCount(0);
 //        System.out.println("Cleared request table rows");
@@ -582,13 +542,7 @@ public class ReportsDashboard extends JPanel {
 //        System.out.println("Final table row count: " + requestsModel.getRowCount());
 //    }
 
-    private void refreshActivityLogs() {
-        activityLogsModel.setRowCount(0);
-        Object[] row1 = new Object[]{"2025-01-01 10:00", "John Doe", "Login", "User logged in successfully"};
-        Object[] row2 = new Object[]{"2025-01-01 10:15", "John Doe", "Borrow", "Borrowed 'The Great Gatsby'"};
-        activityLogsModel.addRow(row1);
-        activityLogsModel.addRow(row2);
-    }
+
 
     private void filterBorrowingHistory() {
         String selectedStatus = (String) statusFilter.getSelectedItem();

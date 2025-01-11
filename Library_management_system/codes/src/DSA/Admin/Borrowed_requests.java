@@ -157,59 +157,59 @@ public class Borrowed_requests {
 //    }
 
 //    2nd version
-    public static boolean confirmRequest(String bookTitle, String userName, int requestId) {
-        try {
-            // Update request status to BORROWED
-            boolean requestUpdated = MySQLBorrowRequestDb.updateRequestStatus(
-                    requestId,
-                    "BORROWED",
-                    getUserId(userName),  // You'll need to implement this helper method
-                    bookTitle
-            );
+//    public static boolean confirmRequest(String bookTitle, String userName, int requestId) {
+//        try {
+//            // Update request status to BORROWED
+//            boolean requestUpdated = MySQLBorrowRequestDb.updateRequestStatus(
+//                    requestId,
+//                    "BORROWED",
+//                    getUserId(userName),  // You'll need to implement this helper method
+//                    bookTitle
+//            );
+//
+//            if (requestUpdated) {
+//                // Update the book's available copies
+//                Books book = findBookByTitle(bookTitle);  // You'll need to implement this helper method
+//                if (book != null) {
+//                    int newAvailableCopies = book.getAvailableCopy() - 1;
+//                    //MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
+//                    return true;
+//                }
+//            }
+//            return false;
+//        } catch (Exception e) {
+//            System.err.println("Error confirming request: " + e.getMessage());
+//            return false;
+//        }
+//    }
 
-            if (requestUpdated) {
-                // Update the book's available copies
-                Books book = findBookByTitle(bookTitle);  // You'll need to implement this helper method
-                if (book != null) {
-                    int newAvailableCopies = book.getAvailableCopy() - 1;
-                    MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
-                    return true;
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            System.err.println("Error confirming request: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public static boolean rejectRequest(String bookTitle, String userName) {
-        try {
-            // Find the pending request
-            Queue<BorrowRequest> pendingRequests = MySQLBorrowRequestDb.loadPendingRequestsIntoQueue();
-            BorrowRequest targetRequest = null;
-
-            for (BorrowRequest request : pendingRequests) {
-                if (request.getTitle().equals(bookTitle) && request.getUser().equals(userName)) {
-                    targetRequest = request;
-                    break;
-                }
-            }
-
-            if (targetRequest != null) {
-                return MySQLBorrowRequestDb.updateRequestStatus(
-                        targetRequest.getId(),
-                        "REJECTED",
-                        getUserId(userName),
-                        bookTitle
-                );
-            }
-            return false;
-        } catch (Exception e) {
-            System.err.println("Error rejecting request: " + e.getMessage());
-            return false;
-        }
-    }
+//    public static boolean rejectRequest(String bookTitle, String userName) {
+//        try {
+//            // Find the pending request
+//            Queue<BorrowRequest> pendingRequests = MySQLBorrowRequestDb.loadPendingRequestsIntoQueue();
+//            BorrowRequest targetRequest = null;
+//
+//            for (BorrowRequest request : pendingRequests) {
+//                if (request.getTitle().equals(bookTitle) && request.getUser().equals(userName)) {
+//                    targetRequest = request;
+//                    break;
+//                }
+//            }
+//
+//            if (targetRequest != null) {
+//                return MySQLBorrowRequestDb.updateRequestStatus(
+//                        targetRequest.getId(),
+//                        "REJECTED",
+//                        getUserId(userName),
+//                        bookTitle
+//                );
+//            }
+//            return false;
+//        } catch (Exception e) {
+//            System.err.println("Error rejecting request: " + e.getMessage());
+//            return false;
+//        }
+//    }
 
     // Helper method to get user ID
     private static int getUserId(String userName) {

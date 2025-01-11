@@ -69,62 +69,62 @@ public class AdminControls {
     }
 
     // In AdminControls.java, update the borrowBook method:
-    public static boolean borrowBook(int userId, String title, String lastName, String author, int copies) {
-        if (title == null || title.trim().isEmpty() || lastName == null || lastName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Invalid input parameters");
-        }
+//    public static boolean borrowBook(int userId, String title, String lastName, String author, int copies) {
+//        if (title == null || title.trim().isEmpty() || lastName == null || lastName.trim().isEmpty()) {
+//            throw new IllegalArgumentException("Invalid input parameters");
+//        }
+//
+//        try {
+//            // First, get current book details from database
+//            List<Books> allBooks = MySQLbookDb.LoadBooks();
+//            Optional<Books> bookOpt = allBooks.stream()
+//                    .filter(b -> b.getTitle().equals(title))
+//                    .findFirst();
+//
+//            if (bookOpt.isPresent()) {
+//                Books book = bookOpt.get();
+//
+//                // Verify enough copies are available
+//                if (book.getAvailableCopy() < copies) {
+//                    return false;
+//                }
+//
+//                // Calculate new available copies
+//                int newAvailableCopies = book.getAvailableCopy() - copies;
+//
+//                // Update database first
+//                MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
+//
+//                // Record the borrow transaction in history with PENDING status
+//                BorrowingHistory.BorrowedHistory(
+//                        userId,
+//                        lastName,
+//                        title,
+//                        author,
+//                        copies,
+//                        "PENDING"  // Set initial status as PENDING
+//                );
+//
+//                return true;
+//            }
+//            return false;
+//        } catch (Exception e) {
+//            System.err.println("Error in borrowBook: " + e.getMessage());
+//            e.printStackTrace();
+//            return false;
+//        }
+//    }
 
-        try {
-            // First, get current book details from database
-            List<Books> allBooks = MySQLbookDb.LoadBooks();
-            Optional<Books> bookOpt = allBooks.stream()
-                    .filter(b -> b.getTitle().equals(title))
-                    .findFirst();
-
-            if (bookOpt.isPresent()) {
-                Books book = bookOpt.get();
-
-                // Verify enough copies are available
-                if (book.getAvailableCopy() < copies) {
-                    return false;
-                }
-
-                // Calculate new available copies
-                int newAvailableCopies = book.getAvailableCopy() - copies;
-
-                // Update database first
-                MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
-
-                // Record the borrow transaction in history with PENDING status
-                BorrowingHistory.BorrowedHistory(
-                        userId,
-                        lastName,
-                        title,
-                        author,
-                        copies,
-                        "PENDING"  // Set initial status as PENDING
-                );
-
-                return true;
-            }
-            return false;
-        } catch (Exception e) {
-            System.err.println("Error in borrowBook: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public static void updateBookCopies(int isbn, int newAvailableCopies) {
-        try {
-            if (newAvailableCopies < 0) {
-                throw new IllegalArgumentException("Available copies cannot be negative");
-            }
-            MySQLbookDb.updateBookCopies(isbn, newAvailableCopies);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update book copies: " + e.getMessage());
-        }
-    }
+//    public static void updateBookCopies(int isbn, int newAvailableCopies) {
+//        try {
+//            if (newAvailableCopies < 0) {
+//                throw new IllegalArgumentException("Available copies cannot be negative");
+//            }
+//            MySQLbookDb.updateBookCopies(isbn, newAvailableCopies);
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to update book copies: " + e.getMessage());
+//        }
+//    }
     public static boolean returnBook(int userId, String bookTitle, String userName, String author) {
         // Check if the book is already returned or not borrowed
         if (!checkIfBookIsBorrowed(userId, bookTitle)) {
