@@ -228,7 +228,6 @@ public class UserDashboard extends JFrame {
 
     private void borrowBook(Books book, users user) {
         int selectedRow = bookTable.getSelectedRow();
-
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this,
                     "Please select a book to request.",
@@ -257,14 +256,13 @@ public class UserDashboard extends JFrame {
                 "Request Copies",
                 JOptionPane.QUESTION_MESSAGE);
 
-        if (copiesInput == null || copiesInput.trim().isEmpty()) {
-            return; // User cancelled or input is empty
+        if (copiesInput == null) {
+            return; // User cancelled
         }
 
         try {
-            int requestedCopies = Integer.parseInt(copiesInput.trim());
+            int requestedCopies = Integer.parseInt(copiesInput);
 
-            // Validate the requested number of copies
             if (requestedCopies <= 0) {
                 throw new IllegalArgumentException("Please enter a positive number of copies.");
             }
@@ -273,19 +271,19 @@ public class UserDashboard extends JFrame {
                 throw new IllegalArgumentException("Cannot request more copies than available.");
             }
 
-            // Submit borrow request to the database with PENDING status
+            // Submit borrow request to database with PENDING status
             boolean requestSuccess = MySQLBorrowRequestDb.addRequest(
-                    user.getId(),
+                    currentUser.getId(),
                     isbn,
                     requestedCopies,
-                    "PENDING"  // Status: PENDING
+                    "PENDING"  // Add the status parameter
             );
 
             if (requestSuccess) {
                 // Record the request in borrowing history with PENDING status
                 boolean historySuccess = BorrowingHistory.BorrowedHistory(
-                        user.getId(),
-                        user.getLastName(),
+                        currentUser.getId(),
+                        currentUser.getLastName(),
                         title,
                         author,
                         requestedCopies,
@@ -300,7 +298,7 @@ public class UserDashboard extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE);
 
                     // Refresh the book list to show updated availability
-                    loadBooks();  // Method to reload the book list after request
+                    loadBooks();
                 } else {
                     throw new Exception("Failed to record request in history.");
                 }
@@ -310,7 +308,7 @@ public class UserDashboard extends JFrame {
 
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this,
-                    "Please enter a valid number for the requested copies.",
+                    "Please enter a valid number.",
                     "Invalid Input",
                     JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException e) {
@@ -326,10 +324,9 @@ public class UserDashboard extends JFrame {
         }
     }
 
-
     private void returnBook() {
         // First, load user's borrowed books
-        List<Borrowed_requests.BorrowRequest> borrowedBooks = BorrowingHistory.LoadHistoryByUser(currentUser.getLastName())
+        List<Borrowed_requests.BorrowRequest> borrowedBooks = BorrowingHistory.LoadHistoryByUser(currentUser.getId())
                 .stream()
                 .filter(h -> h.getStatus().equals("BORROWED"))
                 .toList();
@@ -423,11 +420,11 @@ public class UserDashboard extends JFrame {
         }
 
         JDialog profileDialog = new JDialog(this, "User Profile", true);
-        profileDialog.setSize(400, 300);
+        profileDialog.setSize(400, 400);
         profileDialog.setLocationRelativeTo(this);
 
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 20, 20));
 
         JPanel detailsPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -536,6 +533,11 @@ public class UserDashboard extends JFrame {
 
         profileDialog.add(mainPanel);
         profileDialog.setVisible(true);
+
+        this.dispose();
+        LoginPage loginPage = new LoginPage();  // Ensure that LoginPage is instantiated here
+        loginPage.setVisible(true);
+
     }
     // Helper method remains the same
     private void addLabelAndField(JPanel panel, String labelText, JTextField field, GridBagConstraints gbc) {
@@ -570,7 +572,7 @@ public class UserDashboard extends JFrame {
         // Fetch user's borrowing history from BorrowingHistory or equivalent
         try {
             // Retrieve borrowing history of the logged-in user
-            List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(currentUser.getLastName());
+            List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(currentUser.getId());
             System.out.println("User history size: " + userHistory.size());
 
             // Iterate over each borrowed request
@@ -614,7 +616,9 @@ public class UserDashboard extends JFrame {
                 "Confirm Logout",
                 JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
-            System.exit(0);
+            this.dispose();
+            LoginPage loginPage = new LoginPage();  // Ensure that LoginPage is instantiated here
+            loginPage.setVisible(true);
         }
     }
 

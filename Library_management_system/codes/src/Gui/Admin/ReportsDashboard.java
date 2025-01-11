@@ -33,10 +33,18 @@ public class ReportsDashboard extends JPanel {
     private static final Color BUTTON_COLOR = new Color(184, 207, 229);
 
     public ReportsDashboard() {
+
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
 
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topPanel.setBackground(Color.WHITE);
+        JButton backButton = createStyledButton("← Back");
+        backButton.addActionListener(e -> navigateBack());
+        topPanel.add(backButton);
+
 
         // Initialize table models
         String[] requestColumns = {"Request ID", "User", "Book Title", "Author", "Copies", "Request Date", "Status"};
@@ -83,6 +91,8 @@ public class ReportsDashboard extends JPanel {
 
         // Add action listeners
         setupActionListeners();
+
+        add(topPanel, BorderLayout.NORTH);
 
         // Initial data load
         refreshData();
@@ -412,8 +422,8 @@ public class ReportsDashboard extends JPanel {
 
             String query = "SELECT r.user_id as request_id, u.lastName, b.Title, b.Author, " +
                     "r.copies, r.request_date, r.status " +
-                    "FROM borrow_requests r " +
-                    "JOIN books.addedBooks b ON r.book_id = b.Id " +
+                    "FROM requestTable r " +
+                    "JOIN Books.AddedBooks b ON r.book_id = b.Id " +
                     "JOIN user.users u ON r.user_id = u.id " +
                     "WHERE r.status = 'PENDING' " +
                     "ORDER BY r.request_date ASC";

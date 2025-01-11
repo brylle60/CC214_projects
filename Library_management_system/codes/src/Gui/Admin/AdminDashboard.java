@@ -83,27 +83,34 @@ public class AdminDashboard extends JFrame {
             contentPanel.repaint();
         });
 
-        reportsBtn.addActionListener(e -> {
 
             // Dispose of the current AdminDashboard
-            dispose();
+
 
             // Create a new JFrame and add the ReportsDashboard panel
-            SwingUtilities.invokeLater(() -> {
-                JFrame frame = new JFrame("Reports Dashboard");
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setSize(800, 600);
-                frame.setLocationRelativeTo(null); // Center on screen
-
+            reportsBtn.addActionListener(e -> {
+                contentPanel.removeAll();  // Clear existing content
                 ReportsDashboard reportsDashboard = new ReportsDashboard();
-                frame.add(reportsDashboard); // Add ReportsDashboard JPanel to the frame
-                frame.setVisible(true);
+                contentPanel.add(reportsDashboard, BorderLayout.CENTER);
+                contentPanel.revalidate();
+                contentPanel.repaint();
+                // Dispose of the current AdminDashboard
+                dispose();
+
+                // Create a new JFrame and add the ReportsDashboard panel
+                SwingUtilities.invokeLater(() -> {
+                    JFrame frame = new JFrame("Reports Dashboard");
+                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    frame.setSize(800, 600);
+                    frame.setLocationRelativeTo(null); // Center on screen
+
+
+                    frame.add(reportsDashboard); // Add ReportsDashboard JPanel to the frame
+                    frame.setVisible(true);
+                });
             });
 
-
-
-
-        // Add logout button
+            // Add logout button
         JButton logoutButton = createStyledButton("Logout");
         logoutButton.setBounds(1025, 20, 100, 40);
         logoutButton.addActionListener(e -> {
@@ -114,6 +121,7 @@ public class AdminDashboard extends JFrame {
         });
         mainPanel.add(logoutButton);
         add(mainPanel);
+
     }
 
     private JButton createStyledButton(String text) {
