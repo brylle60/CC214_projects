@@ -97,39 +97,5 @@ public class BorrowedHistory {  private int userId;
     public void setUserId(int userId) {
         this.userId = userId;
     }
-    //    public String toCSV() {
-//        // Ensure each field goes to its proper column
-//        return String.format("%d,%s,%s,%s,%d,%s,%s",
-//                userId,
-//                lastName,
-//                firstName,
-//                borrowedBook,
-//                borrowedCopy,
-//                borrowedDate,
-//                returnedDate
-//        );
-//    }
-
-//    public static BorrowedHistory fromCSV(String line) {
-//        String[] parts = line.split(",");
-//        if (parts.length < 7) {
-//            throw new IllegalArgumentException("Invalid borrow history format");
-//        }
-//
-//        return new BorrowedHistory(
-//                Integer.parseInt(parts[0].trim()),
-//                parts[1].trim(),
-//                parts[2].trim(),
-//                parts[3].trim(),
-//                Integer.parseInt(parts[4].trim()),
-//                parts[5].trim(),
-//                parts[6].trim()
-//        );
-//    }
-
-
-   // public boolean toCSV() {
-    //    return false;
-    //}
 
 }

@@ -6,8 +6,10 @@ import DSA.Objects.users;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import DSA.Objects.users;
@@ -552,63 +554,79 @@ public class UserDashboard extends JFrame {
     }
 
     private void showHistory() {
-        // Create a new JFrame to show the history
         JFrame historyFrame = new JFrame("Borrowing History");
         historyFrame.setSize(800, 400);
         historyFrame.setLocationRelativeTo(null);
-        historyFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);  // Ensure the window can be closed properly
+        historyFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Set layout to BorderLayout to ensure components are added correctly
-        historyFrame.setLayout(new BorderLayout());
+        // Create table model with appropriate columns
+        DefaultTableModel historyTableModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make table read-only
+            }
+        };
 
-        // Create a table model with relevant columns for history
-        DefaultTableModel historyTableModel = new DefaultTableModel();
-        historyTableModel.setColumnIdentifiers(new String[]{"ID", "User Name", "Book Name", "Author", "Copies", "Status"});
+        historyTableModel.setColumnIdentifiers(new String[]{
+                "Book Title", "Author", "Copies", "Status", "Transaction Date"
+        });
 
-        // Create JTable and JScrollPane
         JTable historyTable = new JTable(historyTableModel);
         JScrollPane scrollPane = new JScrollPane(historyTable);
 
-        // Fetch user's borrowing history from BorrowingHistory or equivalent
-        try {
-            // Retrieve borrowing history of the logged-in user
-            List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(currentUser.getId());
-            System.out.println("User history size: " + userHistory.size());
+        // Set column widths
+        historyTable.getColumnModel().getColumn(0).setPreferredWidth(200); // Book Title
+        historyTable.getColumnModel().getColumn(1).setPreferredWidth(150); // Author
+        historyTable.getColumnModel().getColumn(2).setPreferredWidth(70);  // Copies
+        historyTable.getColumnModel().getColumn(3).setPreferredWidth(100); // Status
+        historyTable.getColumnModel().getColumn(4).setPreferredWidth(150); // Transaction Date
 
-            // Iterate over each borrowed request
+        try {
+            List<Borrowed_requests.BorrowRequest> userHistory = BorrowingHistory.LoadHistoryByUser(currentUser.getId());
+
             for (Borrowed_requests.BorrowRequest request : userHistory) {
-                Books book = request.getBook();  // Assuming the BorrowRequest has a getBook() method
-                if (book != null && request != null) {
-                    // Add a row to the history table for each borrow entry
+                Books book = request.getBook();
+                if (book != null) {
                     historyTableModel.addRow(new Object[]{
-                            request.getId(),                // Book ID or Borrow Request ID
-                            request.getUser(),          // User Name
-                            book.getTitle(),                // Book Title
-                            book.getAuthor(),               // Book Author
-                            request.getCopies(),            // Number of copies borrowed
-                            request.getStatus()             // Status can be "BORROWED", "RETURNED", etc.
+                            book.getTitle(),
+                            book.getAuthor(),
+                            request.getCopies(),
+                            request.getStatus()
+//                            request.getRequestDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
                     });
                 }
             }
+
+            // Add a filter panel at the top
+            JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            JComboBox<String> statusFilter = new JComboBox<>(new String[]{"All", "BORROWED", "RETURNED", "PENDING"});
+            filterPanel.add(new JLabel("Filter by Status: "));
+            filterPanel.add(statusFilter);
+
+            // Add filter listener
+            statusFilter.addActionListener(e -> {
+                String selectedStatus = (String) statusFilter.getSelectedItem();
+                TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(historyTableModel);
+                historyTable.setRowSorter(sorter);
+
+                if (!"All".equals(selectedStatus)) {
+                    sorter.setRowFilter(RowFilter.regexFilter(selectedStatus, 3)); // 3 is the status column
+                } else {
+                    sorter.setRowFilter(null);
+                }
+            });
+
+            historyFrame.add(filterPanel, BorderLayout.NORTH);
+            historyFrame.add(scrollPane, BorderLayout.CENTER);
+            historyFrame.setVisible(true);
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Error loading borrowing history: " + e.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
-
-        // Add the table to the frame
-        historyFrame.add(scrollPane, BorderLayout.CENTER);
-
-        // Make sure the history frame is visible in the EDT
-        SwingUtilities.invokeLater(() -> {
-            historyFrame.setVisible(true);
-        });
     }
-
-
-
-
 
     private void logout() {
         int response = JOptionPane.showConfirmDialog(this,

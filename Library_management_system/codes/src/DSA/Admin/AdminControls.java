@@ -121,40 +121,64 @@ public class AdminControls {
 //        }
 //    }
 public static boolean returnBook(int userId, String bookTitle, String userName, String author) {
-    // Check if the book is already returned or never borrowed
-    if (!checkIfBookIsBorrowed(userId, bookTitle)) {
-        System.out.println("This book has already been returned or was never borrowed.");
-        return false;  // Book cannot be returned
-    }
+    Connection connection = null;
+    try {
+        connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
+        connection.setAutoCommit(false);  // Start transaction
 
-    // Update the status of the borrowed book to "RETURNED"
-    String query = "UPDATE " + DB_Connection.HistoryTable +
-            " SET Status = 'RETURNED' WHERE Id = ? AND BookName = ? AND Status = 'BORROWED'";
-
-    try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
-         PreparedStatement statement = connection.prepareStatement(query)) {
-
-        // Set parameters for the prepared statement
-        statement.setInt(1, userId);       // userId
-        statement.setString(2, bookTitle);  // bookTitle
-
-        // Execute the update query
-        int rowsUpdated = statement.executeUpdate();
-
-        if (rowsUpdated > 0) {
-            System.out.println("Book returned successfully.");
-            return true;  // Book has been marked as returned
-        } else {
-            // If no rows were updated, this means the book wasn't in the borrowed state
-            System.out.println("Failed to return the book. It may have already been returned or wasn't borrowed.");
-            return false;  // Book was not in the 'BORROWED' state
+        // 1. Verify the book is currently borrowed
+        if (!checkIfBookIsBorrowed(userId, bookTitle)) {
+            System.out.println("This book has already been returned or was never borrowed.");
+            return false;
         }
 
+        // 2. Get the book details to update available copies
+        Books book = MySQLbookDb.findBookByTitle(bookTitle);
+        if (book == null) {
+            throw new SQLException("Book not found: " + bookTitle);
+        }
+
+        // 3. Update the borrow history status
+        String historyUpdateQuery = "UPDATE " + DB_Connection.HistoryTable +
+                " SET Status = 'RETURNED' " +
+                "WHERE Id = ? AND BookName = ? AND Status = 'BORROWED'";
+
+        try (PreparedStatement stmt = connection.prepareStatement(historyUpdateQuery)) {
+            stmt.setInt(1, userId);
+            stmt.setString(2, bookTitle);
+            stmt.executeUpdate();
+        }
+
+        // 4. Update available copies in the books table
+        boolean copiesUpdated = MySQLbookDb.updateBookCopies(bookTitle, 1, true);
+        if (!copiesUpdated) {
+            throw new SQLException("Failed to update book copies");
+        }
+
+        connection.commit();
+        System.out.println("Book returned successfully.");
+        return true;
+
     } catch (SQLException e) {
-        // Log the error and return false
-        System.err.println("Error while updating borrow history: " + e.getMessage());
-        e.printStackTrace();  // Print full stack trace for debugging
-        return false;  // Handle database errors gracefully
+        try {
+            if (connection != null) {
+                connection.rollback();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        System.err.println("Error returning book: " + e.getMessage());
+        e.printStackTrace();
+        return false;
+    } finally {
+        try {
+            if (connection != null) {
+                connection.setAutoCommit(true);
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
 
@@ -187,39 +211,7 @@ public static boolean returnBook(int userId, String bookTitle, String userName, 
             return false;
         }
     }
-    public List<Books> getAvailableBooks() {
-        return Collections.unmodifiableList(
-                books.stream()
-                        .filter(Books::isAvailable)
-                        .sorted(Comparator.comparingInt(Books::getISBN))
-                        .toList()
-        );
-    }
 
-    public List<Books> getBorrowedBooks() {
-        return Collections.unmodifiableList(
-                books.stream()
-                        .filter(b -> !b.isAvailable())
-                        .sorted(Comparator.comparingInt(Books::getISBN))
-                        .toList()
-        );
-    }
-
-    public List<Books> searchBooks(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            throw new IllegalArgumentException("Search keyword cannot be empty");
-        }
-
-        String searchTerm = keyword.toLowerCase();
-        return Collections.unmodifiableList(
-                books.stream()
-                        .filter(book ->
-                                book.getTitle().toLowerCase().contains(searchTerm) ||
-                                        book.getAuthor().toLowerCase().contains(searchTerm))
-                        .sorted(Comparator.comparingInt(Books::getISBN))
-                        .toList()
-        );
-    }
 
     private void sortBooks() {
         Collections.sort(books, Comparator
