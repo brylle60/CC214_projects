@@ -132,4 +132,31 @@
             }
         }
 
+        public static Books findBookByTitle(String title) {
+            try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+                 PreparedStatement stmt = connection.prepareStatement("SELECT * FROM " + DB_Connection.BookTable + " WHERE Title = ?")) {
+
+                stmt.setString(1, title);
+
+                try (ResultSet resultSet = stmt.executeQuery()) {
+                    if (resultSet.next()) {
+                        return new Books(
+                                resultSet.getInt("Id"),
+                                resultSet.getString("Title"),
+                                resultSet.getString("Genre"),
+                                resultSet.getString("Author"),
+                                resultSet.getDate("Publish_date"),
+                                resultSet.getInt("Copies"),
+                                resultSet.getInt("Total_copies")
+                        );
+                    }
+                }
+                return null; // Return null if no book found
+
+            } catch (SQLException e) {
+                System.err.println("Error finding book by title: " + e.getMessage());
+                throw new RuntimeException("Failed to find book by title: " + e.getMessage(), e);
+            }
+        }
+
     }

@@ -35,11 +35,13 @@ public class ReportsDashboard extends JPanel {
     public ReportsDashboard() {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
+
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Initialize table models
         String[] requestColumns = {"Request ID", "User", "Book Title", "Author", "Copies", "Request Date", "Status"};
         requestsModel = new DefaultTableModel(requestColumns, 0) {
+
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -221,12 +223,14 @@ public class ReportsDashboard extends JPanel {
             for (int i = 0; i < Math.min(columnCount, widths.length); i++) {
                 columnModel.getColumn(i).setPreferredWidth(widths[i]);
             }
+
         } else if (table == activityLogsTable) {
             // Activity logs table has 4 columns
             int[] widths = {150, 100, 100, 250};
             for (int i = 0; i < Math.min(columnCount, widths.length); i++) {
                 columnModel.getColumn(i).setPreferredWidth(widths[i]);
             }
+
         }
 
         // Center align columns based on table type
@@ -276,6 +280,7 @@ public class ReportsDashboard extends JPanel {
             );
 
             if (success) {
+
                 success = BorrowingHistory.BorrowedHistory(
                         requestId,
                         userName,
@@ -294,6 +299,7 @@ public class ReportsDashboard extends JPanel {
                     JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
                     refreshRequests();
                 }
+
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
@@ -340,12 +346,12 @@ public class ReportsDashboard extends JPanel {
                         "Success",
                         JOptionPane.INFORMATION_MESSAGE);
 
-                addActivityLog(
-                        LocalDateTime.now().toString(),
-                        userName,
-                        "Return Book",
-                        "Returned book: " + bookTitle
-                );
+//                addActivityLog(
+//                        LocalDateTime.now().toString(),
+//                        userName,
+//                        "Return Book",
+//                        "Returned book: " + bookTitle
+//                );
 
                 refreshData();
             } else {
@@ -406,8 +412,8 @@ public class ReportsDashboard extends JPanel {
 
             String query = "SELECT r.user_id as request_id, u.lastName, b.Title, b.Author, " +
                     "r.copies, r.request_date, r.status " +
-                    "FROM requestTable r " +
-                    "JOIN Books.AddedBooks b ON r.book_id = b.Id " +
+                    "FROM borrow_requests r " +
+                    "JOIN books.addedBooks b ON r.book_id = b.Id " +
                     "JOIN user.users u ON r.user_id = u.id " +
                     "WHERE r.status = 'PENDING' " +
                     "ORDER BY r.request_date ASC";
@@ -566,11 +572,24 @@ public class ReportsDashboard extends JPanel {
             borrowHistoryModel.addRow(row);
         }
     }
+    private void navigateBack() {
+        // Get the parent window
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof JFrame) {
+            window.dispose();
+            // Create and show admin dashboard
+            JFrame adminFrame = new JFrame("Admin Dashboard");
+            adminFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            AdminDashboard adminDashboard = new AdminDashboard();
 
-    public void addActivityLog(String time, String user, String action, String details) {
-        Object[] row = new Object[]{time, user, action, details};
-        activityLogsModel.addRow(row);
+            adminDashboard.setVisible(true);
+        }
     }
+
+//    public void addActivityLog(String time, String user, String action, String details) {
+//        Object[] row = new Object[]{time, user, action, details};
+//        activityLogsModel.addRow(row);
+//    }
     public static void main(String[] args) {
         // Run GUI code on Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
@@ -588,4 +607,5 @@ public class ReportsDashboard extends JPanel {
             frame.setVisible(true);
         });
     }
+
 }

@@ -12,10 +12,7 @@ public class BorrowingHistory {
     // Method to add borrowed history record
     public static boolean BorrowedHistory(int ID, String userName, String booktitle, String Author, int copies, String Status) {
         // Check if this borrow record already exists
-//        if (checkBorrowExists(ID, booktitle)) {
-//            System.out.println("This book has already been borrowed by the user.");
-//            return false;  // Skip or return false to indicate the record was not inserted
-//        }
+
 
         try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement("INSERT INTO " + DB_Connection.HistoryTable +
@@ -27,6 +24,7 @@ public class BorrowingHistory {
             register.setString(4, Author);
             register.setInt(5, copies);
             register.setString(6, Status);
+
 
             register.executeUpdate();
             return true;  // Successfully added record
@@ -147,14 +145,14 @@ public class BorrowingHistory {
     }
 
     // Utility method to check if a borrow record exists
-    public static boolean checkBorrowExists(int ID, String bookName) {
-        String query = "SELECT COUNT(*) FROM " + DB_Connection.HistoryTable + " WHERE Id = ? AND BookName = ?";
+    public static boolean checkBorrowExists(int ID, int bookRequestID) {
+        String query = "SELECT COUNT(*) FROM " + DB_Connection.HistoryTable + " WHERE Id = ? AND bookRequestID = ?";
 
         try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
              PreparedStatement stmt = connection.prepareStatement(query)) {
 
             stmt.setInt(1, ID);
-            stmt.setString(2, bookName);
+            stmt.setInt(2, bookRequestID);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -202,5 +200,6 @@ public class BorrowingHistory {
             throw new RuntimeException("Failed to fetch book", e);
         }
         return null;  // Return null if no book found
-    }
+            }
+
 }

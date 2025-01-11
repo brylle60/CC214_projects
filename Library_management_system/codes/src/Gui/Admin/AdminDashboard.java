@@ -84,12 +84,24 @@ public class AdminDashboard extends JFrame {
         });
 
         reportsBtn.addActionListener(e -> {
-            contentPanel.removeAll();  // Clear existing content
-            ReportsDashboard reportsDashboard = new ReportsDashboard();
-            contentPanel.add(reportsDashboard, BorderLayout.CENTER);
-            contentPanel.revalidate();
-            contentPanel.repaint();
-        });
+
+            // Dispose of the current AdminDashboard
+            dispose();
+
+            // Create a new JFrame and add the ReportsDashboard panel
+            SwingUtilities.invokeLater(() -> {
+                JFrame frame = new JFrame("Reports Dashboard");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setSize(800, 600);
+                frame.setLocationRelativeTo(null); // Center on screen
+
+                ReportsDashboard reportsDashboard = new ReportsDashboard();
+                frame.add(reportsDashboard); // Add ReportsDashboard JPanel to the frame
+                frame.setVisible(true);
+            });
+
+
+
 
         // Add logout button
         JButton logoutButton = createStyledButton("Logout");
