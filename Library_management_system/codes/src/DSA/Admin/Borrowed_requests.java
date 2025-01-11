@@ -155,59 +155,61 @@ public class Borrowed_requests {
 //            return false;
 //        }
 //    }
-    public static boolean confirmRequest(String bookTitle, String userName, int requestId) {
-        try {
-            // Update request status to BORROWED
-            boolean requestUpdated = MySQLBorrowRequestDb.updateRequestStatus(
-                    requestId,
-                    "BORROWED",
-                    getUserId(userName),  // You'll need to implement this helper method
-                    bookTitle
-            );
 
-            if (requestUpdated) {
-                // Update the book's available copies
-                Books book = findBookByTitle(bookTitle);  // You'll need to implement this helper method
-                if (book != null) {
-                    int newAvailableCopies = book.getAvailableCopy() - 1;
-                    MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
-                    return true;
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            System.err.println("Error confirming request: " + e.getMessage());
-            return false;
-        }
-    }
+//    2nd version
+//    public static boolean confirmRequest(String bookTitle, String userName, int requestId) {
+//        try {
+//            // Update request status to BORROWED
+//            boolean requestUpdated = MySQLBorrowRequestDb.updateRequestStatus(
+//                    requestId,
+//                    "BORROWED",
+//                    getUserId(userName),  // You'll need to implement this helper method
+//                    bookTitle
+//            );
+//
+//            if (requestUpdated) {
+//                // Update the book's available copies
+//                Books book = findBookByTitle(bookTitle);  // You'll need to implement this helper method
+//                if (book != null) {
+//                    int newAvailableCopies = book.getAvailableCopy() - 1;
+//                    //MySQLbookDb.updateBookCopies(book.getISBN(), newAvailableCopies);
+//                    return true;
+//                }
+//            }
+//            return false;
+//        } catch (Exception e) {
+//            System.err.println("Error confirming request: " + e.getMessage());
+//            return false;
+//        }
+//    }
 
-    public static boolean rejectRequest(String bookTitle, String userName) {
-        try {
-            // Find the pending request
-            Queue<BorrowRequest> pendingRequests = MySQLBorrowRequestDb.loadPendingRequestsIntoQueue();
-            BorrowRequest targetRequest = null;
-
-            for (BorrowRequest request : pendingRequests) {
-                if (request.getTitle().equals(bookTitle) && request.getUser().equals(userName)) {
-                    targetRequest = request;
-                    break;
-                }
-            }
-
-            if (targetRequest != null) {
-                return MySQLBorrowRequestDb.updateRequestStatus(
-                        targetRequest.getId(),
-                        "REJECTED",
-                        getUserId(userName),
-                        bookTitle
-                );
-            }
-            return false;
-        } catch (Exception e) {
-            System.err.println("Error rejecting request: " + e.getMessage());
-            return false;
-        }
-    }
+//    public static boolean rejectRequest(String bookTitle, String userName) {
+//        try {
+//            // Find the pending request
+//            Queue<BorrowRequest> pendingRequests = MySQLBorrowRequestDb.loadPendingRequestsIntoQueue();
+//            BorrowRequest targetRequest = null;
+//
+//            for (BorrowRequest request : pendingRequests) {
+//                if (request.getTitle().equals(bookTitle) && request.getUser().equals(userName)) {
+//                    targetRequest = request;
+//                    break;
+//                }
+//            }
+//
+//            if (targetRequest != null) {
+//                return MySQLBorrowRequestDb.updateRequestStatus(
+//                        targetRequest.getId(),
+//                        "REJECTED",
+//                        getUserId(userName),
+//                        bookTitle
+//                );
+//            }
+//            return false;
+//        } catch (Exception e) {
+//            System.err.println("Error rejecting request: " + e.getMessage());
+//            return false;
+//        }
+//    }
 
     // Helper method to get user ID
     private static int getUserId(String userName) {
@@ -226,6 +228,72 @@ public class Borrowed_requests {
         }
         return -1;
     }
+//    public static boolean confirmRequest(String bookTitle, String userName, int requestId) {
+//        try {
+//            // 1. Get book details and update available copies
+//            Books book = findBookByTitle(bookTitle);
+//            if (book == null || book.getAvailableCopy() < 1) {
+//                return false;
+//            }
+//
+//            // 2. Add to borrowing history
+//            boolean historyAdded = BorrowingHistory.BorrowedHistory(
+//                    book.getISBN(),
+//                    userName,
+//                    bookTitle,
+//                    book.getAuthor(),
+//                    1,  // Default to 1 copy for now
+//                    "BORROWED"
+//            );
+//
+//            if (!historyAdded) {
+//                return false;
+//            }
+//
+//            // 3. Update book copies in database
+//            int newCopies = book.getAvailableCopy() - 1;
+//            MySQLbookDb.updateBookCopies(book.getISBN(), newCopies);
+//
+//            // 4. Update request status in database
+//            String updateQuery = "UPDATE " + DB_Connection.RequestTable +
+//                    " SET status = 'BORROWED' WHERE request_id = ?";
+//
+//            try (Connection conn = DriverManager.getConnection(DB_Connection.BorrowedHistory,
+//                    DB_Connection.user, DB_Connection.pass);
+//                 PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
+//
+//                stmt.setInt(1, requestId);
+//                stmt.executeUpdate();
+//                return true;
+//            }
+//
+//        } catch (SQLException e) {
+//            System.err.println("Error confirming request: " + e.getMessage());
+//            return false;
+//        }
+//    }
+//
+//    public static boolean rejectRequest(String bookTitle, String userName) {
+//        try {
+//            String updateQuery = "UPDATE " + DB_Connection.RequestTable +
+//                    " SET status = 'REJECTED' WHERE book_title = ? AND user_name = ? AND status = 'PENDING'";
+//
+//            try (Connection conn = DriverManager.getConnection(DB_Connection.BorrowedHistory,
+//                    DB_Connection.user, DB_Connection.pass);
+//                 PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
+//
+//                stmt.setString(1, bookTitle);
+//                stmt.setString(2, userName);
+//                return stmt.executeUpdate() > 0;
+//            }
+//
+//        } catch (SQLException e) {
+//            System.err.println("Error rejecting request: " + e.getMessage());
+//            return false;
+//        }
+//    }
+
+
 
     // Helper method to find book by title
     private static Books findBookByTitle(String title) {

@@ -118,28 +118,17 @@
                 throw new RuntimeException(e);
             }
         }
-        public static void updateBookCopies(int isbn, int availableCopies) {
-            System.out.println("Updating book with ISBN: " + isbn + ", New copies: " + availableCopies);
-
-            if (isbn <= 0 || availableCopies < 0) {
-                throw new IllegalArgumentException("Invalid ISBN or copy count");
-            }
-
-            try (Connection connection = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
-                 PreparedStatement update = connection.prepareStatement(
-                         "UPDATE " + DB_Connection.BookTable + " SET Copies = ? WHERE Id = ?")) {
-
-                update.setInt(1, availableCopies);
-                update.setInt(2, isbn);
-
-                int rowsUpdated = update.executeUpdate();
-                if (rowsUpdated == 0) {
-                    throw new SQLException("Book with ISBN " + isbn + " not found");
-                }
-
+        // Add this to MySQLbookDb if it doesn't exist
+        public static boolean updateBookCopies(String bookTitle, int copies, boolean isReturn) {
+            String sql = "UPDATE AddedBooks SET Copies = Copies " + (isReturn ? "+" : "-") + " ? WHERE Title = ?";
+            try (Connection conn = DriverManager.getConnection(DB_Connection.book, DB_Connection.user, DB_Connection.pass);
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, copies);
+                pstmt.setString(2, bookTitle);
+                return pstmt.executeUpdate() > 0;
             } catch (SQLException e) {
-                System.err.println("Database error updating copies: " + e.getMessage());
-                throw new RuntimeException("Failed to update book copies: " + e.getMessage(), e);
+                System.err.println("Error updating book copies: " + e.getMessage());
+                return false;
             }
         }
 

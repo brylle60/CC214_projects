@@ -12,10 +12,7 @@ public class BorrowingHistory {
     // Method to add borrowed history record
     public static boolean BorrowedHistory(int ID, String userName, String booktitle, String Author, int copies, String Status) {
         // Check if this borrow record already exists
-//        if (checkBorrowExists(ID, BookRequestId)) {
-//            System.out.println("This book has already been borrowed by the user.");
-//            return false;  // Skip or return false to indicate the record was not inserted
-//        }
+
 
         try (Connection connection = DriverManager.getConnection(DB_Connection.BorrowedHistory, DB_Connection.user, DB_Connection.pass);
              PreparedStatement register = connection.prepareStatement("INSERT INTO " + DB_Connection.HistoryTable +
